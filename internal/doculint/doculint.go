@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"math"
+	"os"
 	"strings"
 
+	"github.com/getoutreach/lintroller/internal/common"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -16,17 +19,6 @@ var Analyzer = analysis.Analyzer{
 	Doc:  "checks for proper function, type, package, constant, and string and numeric literal documentation",
 	Run:  doculint,
 }
-
-// packageMain is a constant denoting the name of the "main" package in a Go program.
-const packageMain = "main"
-
-// funcMain is a constant denoting the name of the "main" function that exists in
-// packageMain of a Go program.
-const funcMain = "main"
-
-// funcInit is a constant denoting the name of the "init" function that can exist in
-// any package of a Go program.
-const funcInit = "init"
 
 // doculint is the function that gets passed to the Analyzer which runs the actual
 // analysis for the doculint linter on a set of files.
@@ -40,7 +32,10 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 	validatePackageName(pass, pass.Pkg.Name())
 
 	for _, file := range pass.Files {
-		if pass.Pkg.Name() != packageMain {
+		// Pull file into a local variable so it can be passed as a parameter safely.
+		file := file
+
+		if pass.Pkg.Name() != common.PackageMain {
 			// Ignore the main package, it doesn't need a package comment.
 
 			// Add this package to packageWithSameNameFile if it does not already
@@ -49,9 +44,16 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 				packageWithSameNameFile[pass.Pkg.Name()] = false
 			}
 
+			// Get current filepath.
+			fp := pass.Fset.PositionFor(file.Package, false).Filename
+			splitPath := strings.Split(fp, string(os.PathSeparator))
+
+			// Extract filename from path and remove the ".go" suffix.
+			fn := strings.TrimSuffix(splitPath[len(splitPath)-1], ".go")
+
 			// If the current file name matches the package name, examine the comment
 			// that should exist within it.
-			if file.Name.Name == pass.Pkg.Name() {
+			if fn == pass.Pkg.Name() {
 				packageWithSameNameFile[pass.Pkg.Name()] = true
 
 				if file.Doc == nil {
@@ -68,7 +70,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		ast.Inspect(file, func(n ast.Node) bool {
 			switch expr := n.(type) {
 			case *ast.FuncDecl:
-				if pass.Pkg.Name() == packageMain && expr.Name.Name == funcMain {
+				if pass.Pkg.Name() == common.PackageMain && expr.Name.Name == common.FuncMain {
 					// Ignore func main in main package.
 					return true
 				}
@@ -77,7 +79,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 				validateFuncDecl(pass, expr)
 			case *ast.IfStmt:
 				// Run through if statement validation rules.
-				validateIfStmt(pass, expr)
+				validateIfStmt(pass, file, expr)
 			case *ast.GenDecl:
 				// Run through general declaration validation rules, currently these
 				// only apply to constants and type declarations, as you will see if
@@ -191,26 +193,51 @@ func validateGenDeclTypes(pass *analysis.Pass, expr *ast.GenDecl) {
 
 // validateIfStmt validates that an *ast.IfStmt upholds doculint standards. What this
 // currently means is that it doesn't contain a condition statement that uses literals.
-func validateIfStmt(pass *analysis.Pass, expr *ast.IfStmt) {
+func validateIfStmt(pass *analysis.Pass, file *ast.File, expr *ast.IfStmt) {
 	be, ok := expr.Cond.(*ast.BinaryExpr)
 	if !ok {
 		// Ignore non-binary expressions in the conditional.
 		return
 	}
 
-	if literal, ok := be.X.(*ast.BasicLit); ok {
-		pass.Reportf(literal.Pos(), "literal found in conditional")
-	}
+	// Check if either of the operands are literals.
+	_, xOk := be.X.(*ast.BasicLit)
+	_, yOk := be.Y.(*ast.BasicLit)
 
-	if literal, ok := be.Y.(*ast.BasicLit); ok {
-		pass.Reportf(literal.Pos(), "literal found in conditional")
+	// Check to see if a literal exists in the conditional expression.
+	if xOk || yOk {
+		// Note the line number that the conditional with the literal(s) in it exists at.
+		conditionalLineNum := pass.Fset.PositionFor(be.Pos(), false).Line
+
+		// Keep track of whether or not we've found a comment above or below the conditional.
+		var foundComment bool
+
+		// Check each comment group to see if there is a comment that exists that explains
+		// the use of the literal(s) found in the conditional expression.
+		for _, commentGroup := range file.Comments {
+			// Iterate through each comment line to account for multiline-comments.
+			for _, commentLine := range commentGroup.List {
+				commentLineNum := pass.Fset.PositionFor(commentLine.Slash, false).Line
+
+				// Check to see if there is a comment that starts within one line of the use of
+				// the literal.
+				if math.Abs(float64(conditionalLineNum-commentLineNum)) == 1 {
+					foundComment = true
+					break
+				}
+			}
+		}
+
+		if !foundComment {
+			pass.Reportf(be.Pos(), "literal(s) found in conditional without a comment within 1 line of it explaining the use")
+		}
 	}
 }
 
 // validateFuncDecl ensures that an *ast.FuncDecl upholds doculint standards by ensuring
 // it has a corresponding comment that starts with the name of the function.
 func validateFuncDecl(pass *analysis.Pass, expr *ast.FuncDecl) {
-	if expr.Name.Name == funcInit {
+	if expr.Name.Name == common.FuncInit {
 		// Ignore init functions.
 		return
 	}
