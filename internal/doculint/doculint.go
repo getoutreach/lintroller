@@ -23,10 +23,9 @@ var Analyzer = analysis.Analyzer{
 // doculint is the function that gets passed to the Analyzer which runs the actual
 // analysis for the doculint linter on a set of files.
 func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
-	// packageWithSameNameFile keep track of which packages have a file with the same
-	// name as the package and which do not (the convention is that this file will
-	// contain the package documentation).
-	packageWithSameNameFile := make(map[string]bool)
+	// Variable to keep track of whether or not this current package has a file with
+	// the same name as the package. This is where the package comment should exist.
+	var packageHasFileWithSameName bool
 
 	// Validate the package name of the current pass, which is a single go package.
 	validatePackageName(pass, pass.Pkg.Name())
@@ -35,15 +34,10 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		// Pull file into a local variable so it can be passed as a parameter safely.
 		file := file
 
-		if pass.Pkg.Name() != common.PackageMain {
+		if pass.Pkg.Name() == common.PackageMain {
 			// Ignore the main package, it doesn't need a package comment.
-
-			// Add this package to packageWithSameNameFile if it does not already
-			// exist.
-			if _, exists := packageWithSameNameFile[pass.Pkg.Name()]; !exists {
-				packageWithSameNameFile[pass.Pkg.Name()] = false
-			}
-
+			packageHasFileWithSameName = true
+		} else {
 			// Get current filepath.
 			fp := pass.Fset.PositionFor(file.Package, false).Filename
 			splitPath := strings.Split(fp, string(os.PathSeparator))
@@ -54,7 +48,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 			// If the current file name matches the package name, examine the comment
 			// that should exist within it.
 			if fn == pass.Pkg.Name() {
-				packageWithSameNameFile[pass.Pkg.Name()] = true
+				packageHasFileWithSameName = true
 
 				if file.Doc == nil {
 					pass.Reportf(0, "package \"%s\" has no comment associated with it in \"%s.go\"", pass.Pkg.Name(), pass.Pkg.Name())
@@ -93,10 +87,8 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		})
 	}
 
-	for pkg := range packageWithSameNameFile {
-		if !packageWithSameNameFile[pkg] {
-			pass.Reportf(0, "package \"%s\" has no file with the same name containing package comment", pkg)
-		}
+	if !packageHasFileWithSameName {
+		pass.Reportf(0, "package \"%s\" has no file with the same name containing package comment", pass.Pkg.Name())
 	}
 
 	return nil, nil
