@@ -48,7 +48,7 @@ func header(pass *analysis.Pass) (interface{}, error) {
 			// Get current filepath for reporting.
 			fp := pass.Fset.PositionFor(file.Package, false).Filename
 
-			pass.Reportf(0, "file \"%s\" does not contain a header which should explain the purpose of the file and any notable design decisions", fp)
+			pass.Reportf(0, "file \"%s\" does not contain a header that explains the purpose of the file and any notable design decisions", fp)
 		}
 	}
 
