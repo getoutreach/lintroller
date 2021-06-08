@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"math"
 	"os"
 	"strings"
 
@@ -71,9 +70,6 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 
 				// Run through function declaration validation rules.
 				validateFuncDecl(pass, expr)
-			case *ast.IfStmt:
-				// Run through if statement validation rules.
-				validateIfStmt(pass, file, expr)
 			case *ast.GenDecl:
 				// Run through general declaration validation rules, currently these
 				// only apply to constants, type, and variable declarations, as you
@@ -227,49 +223,6 @@ func validateGenDeclVariables(pass *analysis.Pass, expr *ast.GenDecl) {
 			if !strings.HasPrefix(strings.TrimSpace(doc.Text()), name) {
 				pass.Reportf(vs.Pos(), "comment for variable \"%s\" should begin with \"%s\"", name, name)
 			}
-		}
-	}
-}
-
-// validateIfStmt validates that an *ast.IfStmt upholds doculint standards. What this
-// currently means is that it doesn't contain a condition statement that uses literals.
-func validateIfStmt(pass *analysis.Pass, file *ast.File, expr *ast.IfStmt) {
-	be, ok := expr.Cond.(*ast.BinaryExpr)
-	if !ok {
-		// Ignore non-binary expressions in the conditional.
-		return
-	}
-
-	// Check if either of the operands are literals.
-	_, xOk := be.X.(*ast.BasicLit)
-	_, yOk := be.Y.(*ast.BasicLit)
-
-	// Check to see if a literal exists in the conditional expression.
-	if xOk || yOk {
-		// Note the line number that the conditional with the literal(s) in it exists at.
-		conditionalLineNum := pass.Fset.PositionFor(be.Pos(), false).Line
-
-		// Keep track of whether or not we've found a comment above or below the conditional.
-		var foundComment bool
-
-		// Check each comment group to see if there is a comment that exists that explains
-		// the use of the literal(s) found in the conditional expression.
-		for _, commentGroup := range file.Comments {
-			// Iterate through each comment line to account for multiline-comments.
-			for _, commentLine := range commentGroup.List {
-				commentLineNum := pass.Fset.PositionFor(commentLine.Slash, false).Line
-
-				// Check to see if there is a comment that starts within one line of the use of
-				// the literal.
-				if math.Abs(float64(conditionalLineNum-commentLineNum)) == 1 {
-					foundComment = true
-					break
-				}
-			}
-		}
-
-		if !foundComment {
-			pass.Reportf(be.Pos(), "literal(s) found in conditional without a comment within 1 line of it explaining the use")
 		}
 	}
 }
