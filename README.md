@@ -5,6 +5,7 @@
 [![Generated via Bootstrap](https://img.shields.io/badge/Outreach-Bootstrap-%235951ff)](https://github.com/getoutreach/bootstrap)
 
 <!--- Block(description) -->
+lintroller is contains all of the custom linters that outreach runs against Go code.
 <!--- EndBlock(description) -->
 
 ----
@@ -13,7 +14,15 @@
 [Generated Documentation](https://engdocs.outreach.cloud/github.com/getoutreach/lintroller/)
 
 <!--- Block(custom) -->
-# PLEASE EDIT THIS
+## Running Locally
+
+```shell
+# This will put the local lintroller binary into your Go bin folder.
+go install ./cmd/lintroller
+
+# Navigate to a repository you'd like to run the lintroller against.
+go vet -vettool $(which lintroller) ./...
+```
 <!--- EndBlock(custom) -->
 
 ## Dependencies and Setup
