@@ -76,8 +76,8 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 				validateIfStmt(pass, file, expr)
 			case *ast.GenDecl:
 				// Run through general declaration validation rules, currently these
-				// only apply to constants and type declarations, as you will see if
-				// you dig into the proceeding function call.
+				// only apply to constants, type, and variable declarations, as you
+				// will see if you dig into the proceeding function call.
 				validateGenDecl(pass, expr)
 			default:
 				return true
@@ -95,13 +95,15 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 }
 
 // validateGenDecl validates an *ast.GenDecl to ensure it is up to doculint standards.
-// Currently this function only looks for constants and type declarations and further
-// validates them.
+// Currently this function only looks for constants, type, and variable declarations
+// then further validates them.
 func validateGenDecl(pass *analysis.Pass, expr *ast.GenDecl) {
 	if expr.Tok == token.CONST {
 		validateGenDeclConstants(pass, expr)
 	} else if expr.Tok == token.TYPE {
 		validateGenDeclTypes(pass, expr)
+	} else if expr.Tok == token.VAR {
+		validateGenDeclVariables(pass, expr)
 	}
 }
 
@@ -178,6 +180,51 @@ func validateGenDeclTypes(pass *analysis.Pass, expr *ast.GenDecl) {
 
 			if !strings.HasPrefix(strings.TrimSpace(doc.Text()), ts.Name.Name) {
 				pass.Reportf(ts.Pos(), "comment for type \"%s\" should begin with \"%s\"", ts.Name.Name, ts.Name.Name)
+			}
+		}
+	}
+}
+
+// validateGenDeclVariables validates an *ast.GenDecl that is a variable type. It ensures
+// that if it is a variable block that the block itself has a comment, and each variable
+// within it also has a comment. If it is a standalone variable it ensures that it has a
+// comment associated with it.
+func validateGenDeclVariables(pass *analysis.Pass, expr *ast.GenDecl) {
+	if expr.Lparen.IsValid() {
+		// Variable block
+		if expr.Doc == nil {
+			pass.Reportf(expr.Pos(), "variable block has no comment associated with it")
+		}
+	}
+
+	for i := range expr.Specs {
+		vs, ok := expr.Specs[i].(*ast.ValueSpec)
+		if ok {
+			if len(vs.Names) > 1 {
+				var names []string
+				for j := range vs.Names {
+					names = append(names, vs.Names[j].Name)
+				}
+
+				pass.Reportf(vs.Pos(), "variables \"%s\" should be separated and each have a comment associated with them", strings.Join(names, ", "))
+				continue
+			}
+
+			name := vs.Names[0].Name
+
+			doc := vs.Doc
+			if !expr.Lparen.IsValid() {
+				// If this variable isn't apart of a variable block it's comment is stored in the *ast.GenDecl type.
+				doc = expr.Doc
+			}
+
+			if doc == nil {
+				pass.Reportf(vs.Pos(), "variable \"%s\" has no comment associated with it", name)
+				continue
+			}
+
+			if !strings.HasPrefix(strings.TrimSpace(doc.Text()), name) {
+				pass.Reportf(vs.Pos(), "comment for variable \"%s\" should begin with \"%s\"", name, name)
 			}
 		}
 	}

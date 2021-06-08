@@ -1,6 +1,9 @@
 package header
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/getoutreach/lintroller/internal/common"
 	"golang.org/x/tools/go/analysis"
 )
@@ -30,6 +33,12 @@ func header(pass *analysis.Pass) (interface{}, error) {
 
 			// Check to see if the comment starts at the first line of the file.
 			if line == 1 {
+				if strings.HasPrefix(comment.Text(), fmt.Sprintf("Package %s", pass.Pkg.Name())) {
+					// This is the package comment, which is not a header comment. Break
+					// and report that this file does not have a header comment.
+					break
+				}
+
 				foundHeaderComment = true
 				break
 			}
