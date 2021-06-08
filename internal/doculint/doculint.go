@@ -98,11 +98,12 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 // Currently this function only looks for constants, type, and variable declarations
 // then further validates them.
 func validateGenDecl(pass *analysis.Pass, expr *ast.GenDecl) {
-	if expr.Tok == token.CONST {
+	switch expr.Tok { //nolint:exhaustive
+	case token.CONST:
 		validateGenDeclConstants(pass, expr)
-	} else if expr.Tok == token.TYPE {
+	case token.TYPE:
 		validateGenDeclTypes(pass, expr)
-	} else if expr.Tok == token.VAR {
+	case token.VAR:
 		validateGenDeclVariables(pass, expr)
 	}
 }
