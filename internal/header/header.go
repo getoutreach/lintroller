@@ -8,10 +8,39 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// doc defines the help text for the header linter.
+const doc = `The header linter ensures each .go file has a header comment section
+defined before the package keyword that matches the fields defined via the -fields
+flag.
+
+As an example, say the following flag was passed to the linter:
+
+	-flags=Author(s),Description,Gotchas
+
+This would mean the linter would pass on files that resemble the following:
+
+	// Authors(s): <value>
+	// Description: <multi-line
+	// value>
+	// Gotchas: <value>
+
+	package foo
+
+The <value> portion of each field can extend to the next line, as show in the
+value for the description field above; however, there can't be a break in the
+comment group for the header, as follows:
+
+	// Authors(s): <value>
+
+	// Description: <value>
+	// Gotchas: <value>
+
+	package foo`
+
 // Analyzer exports the doculint analyzer (linter).
 var Analyzer = analysis.Analyzer{
 	Name: "header",
-	Doc:  "ensures each .go file has a header that explains the purpose of the file and any notable design decisions",
+	Doc:  doc,
 	Run:  header,
 }
 
