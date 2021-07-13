@@ -15,7 +15,7 @@ flag.
 
 As an example, say the following flag was passed to the linter:
 
-	-flags=Author(s),Description,Gotchas
+	-fields=Author(s),Description,Gotchas
 
 This would mean the linter would pass on files that resemble the following:
 
