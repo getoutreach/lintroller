@@ -26,7 +26,7 @@ This would mean the linter would pass on files that resemble the following:
 
 	package foo
 
-The <value> portion of each field can extend to the next line, as show in the
+The <value> portion of each field can extend to the next line, as shown in the
 value for the description field above; however, there can't be a break in the
 comment group for the header, as follows:
 
