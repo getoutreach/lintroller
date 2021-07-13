@@ -54,7 +54,7 @@ var (
 )
 
 func init() { //nolint:gochecknoinits
-	Analyzer.Flags.StringVar(&rawFields, "fields", "description", "comma-separated list of fields required to be filled out in the header")
+	Analyzer.Flags.StringVar(&rawFields, "fields", "Description", "comma-separated list of fields required to be filled out in the header")
 }
 
 // header is the function that gets passed to the Analyzer which runs the actual
