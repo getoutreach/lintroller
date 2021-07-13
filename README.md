@@ -22,6 +22,35 @@ go install ./cmd/lintroller
 
 # Navigate to a repository you'd like to run the lintroller against.
 go vet -vettool $(which lintroller) ./...
+
+# Example of passing flags:
+go vet -vettool $(which lintroller) -header.fields description,gotchas ./...
+```
+
+An alternative way to run the tool which is easier for rapid development is to build and then pass the absolute path of
+the binary to `go vet -vettool`:
+
+```shell
+# In the root of this repository:
+make build
+
+# In the root of a repository you're testing against:
+go vet -vettool ~/go/src/github.com/getoutreach/lintroller/bin/lintroller ./...
+```
+
+The reason this is easier for rapid development is because these two steps can be done in separate terminal windows/panes/
+tabs and it removes the annoyance of dealing with cached binaries that come along with `go install`.
+
+## Singular Linters and Flags
+
+To get information regarding singular linters and their flags you can run the following command(s) (after building):
+
+```shell
+# Provides a list of linters defined within lintroller.
+./bin/lintroller help
+
+# Shows the flags, descriptions, and defaults for an individual linter.
+./bin/lintroller help <linter>
 ```
 <!--- EndBlock(custom) -->
 

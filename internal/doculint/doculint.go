@@ -12,11 +12,28 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// doc defines the help text for the doculint linter.
+const doc = `Checks for proper function, type, package, constant, and string and numeric 
+literal documentation in accordance with godoc standards.`
+
 // Analyzer exports the doculint analyzer (linter).
 var Analyzer = analysis.Analyzer{
 	Name: "doculint",
-	Doc:  "checks for proper function, type, package, constant, and string and numeric literal documentation",
+	Doc:  doc,
 	Run:  doculint,
+}
+
+// Variable block to keep track of flags whose values are collected at runtime. See the
+// init function that immediately proceeds this block to see more.
+var (
+	// minFunLen is a variable that gets collected via flags. This variable contains a
+	// the minimum function length that doculint will report on if said function has no
+	// related documentation.
+	minFunLen int
+)
+
+func init() { //nolint:gochecknoinits
+	Analyzer.Flags.IntVar(&minFunLen, "minFunLen", 10, "the minimum function length that doculint will report on if said function has no related documentation")
 }
 
 // doculint is the function that gets passed to the Analyzer which runs the actual
@@ -68,8 +85,18 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 					return true
 				}
 
-				// Run through function declaration validation rules.
-				validateFuncDecl(pass, expr)
+				start := pass.Fset.PositionFor(expr.Pos(), false).Line
+				end := pass.Fset.PositionFor(expr.End(), false).Line
+
+				// The reason a 1 is added is to account for single-line functions (edge case).
+				// This also doesn't affect non-single line functions, it will just account for
+				// the trailing } which is what most people would expect anyways when providing
+				// a minimum function length to validate against.
+				if (end - start + 1) >= minFunLen {
+					// Run through function declaration validation rules if the minimum function
+					// length is met or exceeded.
+					validateFuncDecl(pass, expr)
+				}
 			case *ast.GenDecl:
 				// Run through general declaration validation rules, currently these
 				// only apply to constants, type, and variable declarations, as you
