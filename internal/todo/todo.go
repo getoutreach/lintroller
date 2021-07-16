@@ -19,6 +19,7 @@ var Analyzer = analysis.Analyzer{
 	Run:  todo,
 }
 
+// Regular expression variable block for the todo linter.
 var (
 	// reTodo is the regular expression that matches the required TODO format by this
 	// linter.
