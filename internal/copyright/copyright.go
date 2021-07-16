@@ -1,3 +1,4 @@
+// Package copyright contains the necessary logic for the copyright linter.
 package copyright
 
 import (
@@ -9,7 +10,7 @@ import (
 )
 
 // Here is an example regular expression that can be used to test this linter:
-// ^Copyright 20[2-9][0-9] Outreach Corporation\.  All Rights Reserved\.$
+// ^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$
 
 // doc defines the help text for the copyright linter.
 const doc = `Ensures each .go file has a comment at the top of the file containing the 
