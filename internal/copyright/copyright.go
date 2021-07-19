@@ -12,13 +12,16 @@ import (
 // Here is an example regular expression that can be used to test this linter:
 // ^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$
 
+// name defines the name of the copyright linter.
+const name = "copyright"
+
 // doc defines the help text for the copyright linter.
 const doc = `Ensures each .go file has a comment at the top of the file containing the 
 copyright string requested via flags.`
 
 // Analyzer exports the copyright analyzer (linter).
 var Analyzer = analysis.Analyzer{
-	Name: "copyright",
+	Name: name,
 	Doc:  doc,
 	Run:  copyright,
 }
