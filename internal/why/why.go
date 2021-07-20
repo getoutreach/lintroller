@@ -29,7 +29,7 @@ var Analyzer = analysis.Analyzer{
 // ensures it contains a // Why: <reason> immediately proceeding the nolint directive.
 //
 // For examples, see https://regex101.com/r/I41sfC/1
-var reNoLintWhy = regexp.MustCompile(`^nolint:\s?[\w\-,]+\s?\/\/\s?Why:\s?.+$`)
+var reNoLintWhy = regexp.MustCompile(`^nolint:\s?[\w\-,]+\s?\/\/\s?Why:\s?.+$`) //nolint:regexpSimplify,gocritic // Why: It is suggesting bad syntax by not escaping each of the forward slashes.
 
 // why is the function that gets passed to the Analyzer which runs the actual analysis
 // for the why linter on a set of files.
