@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/getoutreach/lintroller/internal/nolint"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -34,14 +35,17 @@ var reNoLintWhy = regexp.MustCompile(`^nolint:\s?[\w\-,]+\s?\/\/\s?Why:\s?.+$`) 
 // why is the function that gets passed to the Analyzer which runs the actual analysis
 // for the why linter on a set of files.
 func why(pass *analysis.Pass) (interface{}, error) {
-	for _, file := range pass.Files {
+	// Wrap pass with nolint.Pass to take nolint directives into account.
+	passWithNoLint := nolint.PassWithNoLint(name, pass)
+
+	for _, file := range passWithNoLint.Files {
 		for _, commentGroup := range file.Comments {
 			for _, comment := range commentGroup.List {
 				text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
 
 				if strings.HasPrefix(text, "nolint") {
 					if !reNoLintWhy.MatchString(text) {
-						pass.Reportf(comment.Pos(), "nolint comment must immediately be followed by // Why: <reason> on the same line.")
+						passWithNoLint.Reportf(comment.Pos(), "nolint comment must immediately be followed by // Why: <reason> on the same line.")
 					}
 				}
 			}
