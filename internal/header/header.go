@@ -8,6 +8,9 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// name defines the name of the header linter.
+const name = "header"
+
 // doc defines the help text for the header linter.
 const doc = `The header linter ensures each .go file has a header comment section
 defined before the package keyword that matches the fields defined via the -fields
@@ -39,7 +42,7 @@ comment group for the header, as follows:
 
 // Analyzer exports the doculint analyzer (linter).
 var Analyzer = analysis.Analyzer{
-	Name: "header",
+	Name: name,
 	Doc:  doc,
 	Run:  header,
 }
