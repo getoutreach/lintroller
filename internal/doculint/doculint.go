@@ -154,7 +154,6 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 				// This also doesn't affect non-single line functions, it will just account for
 				// the trailing } which is what most people would expect anyways when providing
 				// a minimum function length to validate against.
-				fmt.Println("------------>>>>>>>>>>> using minFunLen", minFunLen)
 				if (end - start + 1) >= minFunLen {
 					// Run through function declaration validation rules if the minimum function
 					// length is met or exceeded.
