@@ -27,6 +27,21 @@ var Analyzer = analysis.Analyzer{
 	Run:  doculint,
 }
 
+// NewAnalyzerWithOptions returns the Analyzer package-level variable, with the options
+// that would have been defined via flags if this was ran as a vet tool. This is so the
+// analyzers can be ran outside of the context of a vet tool and config can be gathered
+// from elsewhere.
+func NewAnalyzerWithOptions(_minFunLen int, _validatePackages, _validateFunctions, _validateVariables, _validateConstants, _validateTypes bool) *analysis.Analyzer {
+	minFunLen = _minFunLen
+	validatePackages = _validatePackages
+	validateFunctions = _validateFunctions
+	validateVariables = _validateVariables
+	validateConstants = _validateConstants
+	validateTypes = _validateTypes
+
+	return &Analyzer
+}
+
 // Variable block to keep track of flags whose values are collected at runtime. See the
 // init function that immediately proceeds this block to see more.
 var (
@@ -139,6 +154,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 				// This also doesn't affect non-single line functions, it will just account for
 				// the trailing } which is what most people would expect anyways when providing
 				// a minimum function length to validate against.
+				fmt.Println("------------>>>>>>>>>>> using minFunLen", minFunLen)
 				if (end - start + 1) >= minFunLen {
 					// Run through function declaration validation rules if the minimum function
 					// length is met or exceeded.

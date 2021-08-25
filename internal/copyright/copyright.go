@@ -26,6 +26,16 @@ var Analyzer = analysis.Analyzer{
 	Run:  copyright,
 }
 
+// NewAnalyzerWithOptions returns the Analyzer package-level variable, with the options
+// that would have been defined via flags if this was ran as a vet tool. This is so the
+// analyzers can be ran outside of the context of a vet tool and config can be gathered
+// from elsewhere.
+func NewAnalyzerWithOptions(_copyrightString string, _regularExpression bool) *analysis.Analyzer {
+	copyrightString = _copyrightString
+	regularExpression = _regularExpression
+	return &Analyzer
+}
+
 // Variable block to keep track of flags whose values are collected at runtime. See the
 // init function that immediately proceeds this block to see more.
 var (
