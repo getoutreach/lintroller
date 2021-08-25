@@ -115,7 +115,7 @@ func (c *comparer) trackUniqueness(copyrightString string) {
 // uniqueCopyrights returns a slice of all of the unqiue copyright strings found.
 func (c *comparer) uniqueCopyrights() []string {
 	var unique []string
-	for copyrightString, _ := range c.uniqueCopyrightsInternal {
+	for copyrightString := range c.uniqueCopyrightsInternal {
 		unique = append(unique, copyrightString)
 	}
 	return unique

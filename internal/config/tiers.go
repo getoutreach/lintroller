@@ -41,19 +41,19 @@ func (l *Lintroller) ValidateTier() error {
 
 	switch strings.ToLower(*l.Tier) {
 	case TierBronze:
-		if err := l.EnsureMinimums(TierBronzeConfiguration); err != nil {
+		if err := l.EnsureMinimums(&TierBronzeConfiguration); err != nil {
 			return errors.Wrap(err, "ensure given configuration meets minimum requirments for bronze tier")
 		}
 	case TierSilver:
-		if err := l.EnsureMinimums(TierSilverConfiguration); err != nil {
+		if err := l.EnsureMinimums(&TierSilverConfiguration); err != nil {
 			return errors.Wrap(err, "ensure given configuration meets minimum requirments for silver tier")
 		}
 	case TierGold:
-		if err := l.EnsureMinimums(TierGoldConfiguration); err != nil {
+		if err := l.EnsureMinimums(&TierGoldConfiguration); err != nil {
 			return errors.Wrap(err, "ensure given configuration meets minimum requirments for gold tier")
 		}
 	case TierPlatinum:
-		if err := l.EnsureMinimums(TierPlatinumConfiguration); err != nil {
+		if err := l.EnsureMinimums(&TierPlatinumConfiguration); err != nil {
 			return errors.Wrap(err, "ensure given configuration meets minimum requirments for platinum tier")
 		}
 	default:
@@ -75,7 +75,7 @@ func (l *Lintroller) ValidateTier() error {
 // This function will allow the receiver to be more restrictive (enable linters when the
 // desired has them disabled, set the minimum function length to a lower value, add more
 // required header fields, etc.), but not allow it to be less restrictive.
-func (l *Lintroller) EnsureMinimums(desired Lintroller) error { //nolint:funlen // Why: Splitting this function out would add no value.
+func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen // Why: Splitting this function out would add no value.
 	overrideBool := func(necessary, current bool, fieldPath string) bool {
 		if necessary {
 			if !current {

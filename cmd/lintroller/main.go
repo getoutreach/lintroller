@@ -19,7 +19,7 @@ import (
 	"golang.org/x/tools/go/analysis/unitchecker"
 )
 
-func main() {
+func main() { //nolint:funlen // Why: Splitting this function up wouldn't do anything for readability.
 	var discard string
 	flag.StringVar(&discard, "config", "", "The path to the config file for lintroller. If this is not set it will be assumed lintroller is running as a vet tool.")
 
