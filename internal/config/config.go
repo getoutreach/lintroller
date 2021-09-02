@@ -88,20 +88,22 @@ type Copyright struct {
 	// Enabled denotes whether or not this linter is enabled. Defaults to true.
 	Enabled bool `yaml:"enabled"`
 
-	// String is the copyright string required at the top of each .go file. if empty
-	// this linter is a no-op. Defaults to an empty string.
-	String string `yaml:"string"`
+	// Text is the copyright literal string required at the top of each .go file. If this
+	// and pattern are empty this linter is a no-op. Pattern will always take precedence
+	// over text if both are provided. Defaults to an empty string.
+	Text string `yaml:"text"`
 
-	// Regex denotes whether or not the copyright string was given as a regular expression.
-	// Defaults to false.
-	Regex bool `yaml:"regex"`
+	// Pattern is the copyright pattern as a regular expression required at the top of each
+	// .go file. If this and pattern are empty this linter is a no-op. Pattern will always
+	// take precedence over text if both are provided. Defaults to an empty string.
+	Pattern string `yaml:"pattern"`
 }
 
 // MarshalLog implements the log.Marshaler interface.
 func (c *Copyright) MarshalLog(addField func(key string, value interface{})) {
 	addField("enabled", c.Enabled)
-	addField("string", c.String)
-	addField("regex", c.Regex)
+	addField("text", c.Text)
+	addField("pattern", c.Pattern)
 }
 
 // Doculint is the configuration type that matches the flags exposed by the doculint

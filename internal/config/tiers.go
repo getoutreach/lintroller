@@ -114,15 +114,20 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 
 	// Ensure copyright linter minimum configuration against desired.
 	l.Copyright.Enabled = overrideBool(desired.Copyright.Enabled, l.Copyright.Enabled, "lintroller.copyright.enabled")
-	if l.Copyright.String == "" {
-		// If they've provided a string, use theirs and their value of lintroller.copyright.regex. If not, set defaults.
-
-		l.Copyright.Regex = overrideBool(desired.Copyright.Regex, l.Copyright.Regex, "lintroller.copyright.regex")
+	if l.Copyright.Pattern == "" {
 		log.Warn(context.Background(), "zero value detected for field, overriding to value found in desired tier minimum version", log.F{
-			"field": "lintroller.copyright.string",
-			"value": desired.Copyright.String,
+			"field": "lintroller.copyright.pattern",
+			"value": desired.Copyright.Pattern,
 		})
-		l.Copyright.String = desired.Copyright.String
+
+		l.Copyright.Pattern = desired.Copyright.Pattern
+	} else if l.Copyright.Pattern != desired.Copyright.Pattern {
+		log.Warn(context.Background(), "deviation detected for field, overriding to value found in desired tier minimum version", log.F{
+			"field": "lintroller.copyright.pattern",
+			"value": desired.Copyright.Pattern,
+		})
+
+		l.Copyright.Pattern = desired.Copyright.Pattern
 	}
 
 	// Ensure doculint linter minimum configuration against desired.
@@ -161,8 +166,8 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 var TierBronzeConfiguration = Lintroller{
 	Tier: &TierBronze,
 	Header: Header{
-		Enabled: true,
-		Fields:  []string{"Description"},
+		Enabled: false,
+		Fields:  nil,
 	},
 	Copyright: Copyright{
 		Enabled: false,
@@ -177,10 +182,10 @@ var TierBronzeConfiguration = Lintroller{
 		ValidateTypes:     false,
 	},
 	Todo: Todo{
-		Enabled: true,
+		Enabled: false,
 	},
 	Why: Why{
-		Enabled: true,
+		Enabled: false,
 	},
 }
 
@@ -194,8 +199,7 @@ var TierSilverConfiguration = Lintroller{
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		String:  `^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$`,
-		Regex:   true,
+		Pattern: `^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$`,
 	},
 	Doculint: Doculint{
 		Enabled:           true,
@@ -204,7 +208,7 @@ var TierSilverConfiguration = Lintroller{
 		ValidateFunctions: false,
 		ValidateVariables: false,
 		ValidateConstants: false,
-		ValidateTypes:     true,
+		ValidateTypes:     false,
 	},
 	Todo: Todo{
 		Enabled: true,
@@ -224,8 +228,7 @@ var TierGoldConfiguration = Lintroller{
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		String:  `^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$`,
-		Regex:   true,
+		Pattern: `^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$`,
 	},
 	Doculint: Doculint{
 		Enabled:           true,
@@ -254,8 +257,7 @@ var TierPlatinumConfiguration = Lintroller{
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		String:  `^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$`,
-		Regex:   true,
+		Pattern: `^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$`,
 	},
 	Doculint: Doculint{
 		Enabled:           true,

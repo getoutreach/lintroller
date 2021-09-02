@@ -19,9 +19,10 @@ import (
 	"golang.org/x/tools/go/analysis/unitchecker"
 )
 
-func main() { //nolint:funlen // Why: Splitting this function up wouldn't do anything for readability.
-	var discard string
-	flag.StringVar(&discard, "config", "", "The path to the config file for lintroller. If this is not set it will be assumed lintroller is running as a vet tool.")
+func main() {
+	// This needs to be set so that when the analyzers parse their flags they won't error due to
+	// an unknown flag being passed.
+	_ = flag.String("config", "", "The path to the config file for lintroller. If this is not set it will be assumed lintroller is running as a vet tool.")
 
 	mainFs := flag.NewFlagSet("main", flag.ContinueOnError)
 
@@ -39,26 +40,22 @@ func main() { //nolint:funlen // Why: Splitting this function up wouldn't do any
 			"path": configPath,
 		})
 
+		table := []struct {
+			Enabled  bool
+			Analyzer *analysis.Analyzer
+		}{
+			{cfg.Header.Enabled, header.NewAnalyzerWithOptions(strings.Join(cfg.Header.Fields, ","))},
+			{cfg.Copyright.Enabled, copyright.NewAnalyzerWithOptions(cfg.Copyright.Text, cfg.Copyright.Pattern)},
+			{cfg.Doculint.Enabled, doculint.NewAnalyzerWithOptions(cfg.Doculint.MinFunLen, cfg.Doculint.ValidatePackages, cfg.Doculint.ValidateFunctions, cfg.Doculint.ValidateVariables, cfg.Doculint.ValidateConstants, cfg.Doculint.ValidateTypes)},
+			{cfg.Todo.Enabled, &todo.Analyzer},
+			{cfg.Why.Enabled, &why.Analyzer},
+		}
+
 		var analyzers []*analysis.Analyzer
-
-		if cfg.Header.Enabled {
-			analyzers = append(analyzers, header.NewAnalyzerWithOptions(strings.Join(cfg.Header.Fields, ",")))
-		}
-
-		if cfg.Copyright.Enabled {
-			analyzers = append(analyzers, copyright.NewAnalyzerWithOptions(cfg.Copyright.String, cfg.Copyright.Regex))
-		}
-
-		if cfg.Doculint.Enabled {
-			analyzers = append(analyzers, doculint.NewAnalyzerWithOptions(cfg.Doculint.MinFunLen, cfg.Doculint.ValidatePackages, cfg.Doculint.ValidateFunctions, cfg.Doculint.ValidateVariables, cfg.Doculint.ValidateConstants, cfg.Doculint.ValidateTypes))
-		}
-
-		if cfg.Todo.Enabled {
-			analyzers = append(analyzers, &todo.Analyzer)
-		}
-
-		if cfg.Why.Enabled {
-			analyzers = append(analyzers, &why.Analyzer)
+		for i := range table {
+			if table[i].Enabled {
+				analyzers = append(analyzers, table[i].Analyzer)
+			}
 		}
 
 		multichecker.Main(analyzers...)
