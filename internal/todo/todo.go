@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/getoutreach/lintroller/internal/common"
 	"github.com/getoutreach/lintroller/internal/nolint"
 	"golang.org/x/tools/go/analysis"
 )
@@ -40,10 +41,20 @@ var (
 // todo is the function that gets passed to the Analyzer which runs the actual
 // analysis for the todo linter on a set of files.
 func todo(pass *analysis.Pass) (interface{}, error) {
+	// Ignore test packages.
+	if common.IsTestPackage(pass) {
+		return nil, nil
+	}
+
 	// Wrap pass with nolint.Pass to take nolint directives into account.
 	passWithNoLint := nolint.PassWithNoLint(name, pass)
 
 	for _, file := range passWithNoLint.Files {
+		// Ignore generated files.
+		if common.IsGenerated(file) {
+			continue
+		}
+
 		for _, commentGroup := range file.Comments {
 			for _, comment := range commentGroup.List {
 				text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))

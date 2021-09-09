@@ -72,10 +72,20 @@ func init() { //nolint:gochecknoinits
 // header is the function that gets passed to the Analyzer which runs the actual
 // analysis for the header linter on a set of files.
 func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
+	// Ignore test packages.
+	if common.IsTestPackage(pass) {
+		return nil, nil
+	}
+
 	fields := strings.Split(rawFields, ",")
 	validFields := make(map[string]bool, len(fields))
 
 	for _, file := range pass.Files {
+		// Ignore generated files.
+		if common.IsGenerated(file) {
+			continue
+		}
+
 		if pass.Pkg.Name() == common.PackageMain {
 			// Ignore the main package, there should really one ever be one file in the
 			// main package and it should contain func main, leaving implementation to

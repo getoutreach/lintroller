@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -22,15 +23,24 @@ import (
 func main() {
 	// This needs to be set so that when the analyzers parse their flags they won't error due to
 	// an unknown flag being passed.
-	_ = flag.String("config", "", "The path to the config file for lintroller. If this is not set it will be assumed lintroller is running as a vet tool.")
+	_ = flag.String("config", "", "the path to the config file for lintroller. if this is not set it will be assumed lintroller is running as a vet tool")
+	_ = flag.Bool("quiet", true, "whether or not the linter will emit log statements outside of linting results. only applies when config is passed (when lintroller is not running in vet mode)")
 
 	mainFs := flag.NewFlagSet("main", flag.ContinueOnError)
 
 	var configPath string
-	mainFs.StringVar(&configPath, "config", "", "The path to the config file for lintroller. If this is not set it will be assumed lintroller is running as a vet tool.")
+	var quiet bool
+
+	mainFs.StringVar(&configPath, "config", "", "the path to the config file for lintroller. if this is not set it will be assumed lintroller is running as a vet tool")
+	mainFs.BoolVar(&quiet, "quiet", true, "whether or not the linter will emit log statements outside of linting results. only applies when config is passed (when lintroller is not running in vet mode)")
+
 	_ = mainFs.Parse(os.Args[1:]) //nolint:errcheck // Why: There is no need to check this error.
 
 	if configPath != "" {
+		if quiet {
+			log.SetOutput(ioutil.Discard)
+		}
+
 		cfg, err := config.FromFile(configPath)
 		if err != nil {
 			log.Fatal(context.Background(), "retrieve config from file", events.NewErrorInfo(err))
@@ -58,7 +68,9 @@ func main() {
 			}
 		}
 
-		multichecker.Main(analyzers...)
+		if len(analyzers) > 0 {
+			multichecker.Main(analyzers...)
+		}
 		return
 	}
 

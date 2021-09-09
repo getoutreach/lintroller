@@ -92,6 +92,11 @@ func init() { //nolint:gochecknoinits
 // doculint is the function that gets passed to the Analyzer which runs the actual
 // analysis for the doculint linter on a set of files.
 func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
+	// Ignore test packages.
+	if common.IsTestPackage(pass) {
+		return nil, nil
+	}
+
 	// Wrap pass with nolint.Pass to take nolint directives into account.
 	passWithNoLint := nolint.PassWithNoLint(name, pass)
 
@@ -105,6 +110,11 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 	for _, file := range passWithNoLint.Files {
 		// Pull file into a local variable so it can be passed as a parameter safely.
 		file := file
+
+		// Ignore generated files.
+		if common.IsGenerated(file) {
+			continue
+		}
 
 		if passWithNoLint.Pkg.Name() == common.PackageMain || !validatePackages {
 			// Ignore the main package, it doesn't need a package comment, and ignore package comment

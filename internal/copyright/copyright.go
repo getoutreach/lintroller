@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/getoutreach/lintroller/internal/common"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -140,6 +141,11 @@ func init() { //nolint:gochecknoinits
 // copyright is the function that gets passed to the Analyzer which runs the actual
 // analysis for the copyright linter on a set of files.
 func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
+	// Ignore test packages.
+	if common.IsTestPackage(pass) {
+		return nil, nil
+	}
+
 	if text == "" && pattern == "" {
 		return nil, nil
 	}
@@ -148,6 +154,11 @@ func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 	var c comparer
 
 	for _, file := range pass.Files {
+		// Ignore generated files.
+		if common.IsGenerated(file) {
+			continue
+		}
+
 		fp := pass.Fset.PositionFor(file.Package, false).Filename
 
 		// Variable to keep track of whether or not the copyright string was found at the
