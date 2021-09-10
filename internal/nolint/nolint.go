@@ -55,7 +55,8 @@ type Pass struct {
 // identified for the provided linter name.
 func PassWithNoLint(linter string, pass *analysis.Pass) *Pass {
 	p := Pass{
-		Pass: pass,
+		Pass:   pass,
+		linter: linter,
 	}
 
 	for _, file := range p.Files {
