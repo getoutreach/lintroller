@@ -46,6 +46,7 @@ func (n *noLint) Matches(position token.Position) bool {
 // directly, it will essentially be a no-op wrapper around *analysis.Pass.
 type Pass struct {
 	noLints []noLint
+	linter  string
 
 	*analysis.Pass
 }
@@ -92,5 +93,5 @@ func (p *Pass) Reportf(pos token.Pos, format string, args ...interface{}) {
 		}
 	}
 
-	p.Pass.Reportf(pos, format, args...)
+	p.Pass.Reportf(pos, format+" (%s)", append(args, p.linter)...)
 }
