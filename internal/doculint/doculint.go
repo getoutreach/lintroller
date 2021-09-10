@@ -145,6 +145,10 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		}
 
 		ast.Inspect(file, func(n ast.Node) bool {
+			// funcStart and funcEnd keep track of the most recently encountered function start and
+			// end locations.
+			var funcStart, funcEnd int
+
 			switch expr := n.(type) {
 			case *ast.FuncDecl:
 				if !validateFunctions {
@@ -157,19 +161,25 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 					return true
 				}
 
-				start := passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line
-				end := passWithNoLint.Fset.PositionFor(expr.End(), false).Line
+				funcStart = passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line
+				funcEnd = passWithNoLint.Fset.PositionFor(expr.End(), false).Line
 
 				// The reason a 1 is added is to account for single-line functions (edge case).
 				// This also doesn't affect non-single line functions, it will just account for
 				// the trailing } which is what most people would expect anyways when providing
 				// a minimum function length to validate against.
-				if (end - start + 1) >= minFunLen {
+				if (funcEnd - funcStart + 1) >= minFunLen {
 					// Run through function declaration validation rules if the minimum function
 					// length is met or exceeded.
 					validateFuncDecl(passWithNoLint, expr)
 				}
 			case *ast.GenDecl:
+				if passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line > funcStart &&
+					passWithNoLint.Fset.PositionFor(expr.End(), false).Line < funcEnd {
+					// Ignore general declarations that are within a function.
+					return true
+				}
+
 				// Run through general declaration validation rules, currently these
 				// only apply to constants, type, and variable declarations, as you
 				// will see if you dig into the proceeding function call.

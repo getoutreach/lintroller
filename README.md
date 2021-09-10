@@ -76,6 +76,9 @@ to make the output look a little better:
 # The path to the binary may not necessarily be the same on your machine
 ~/go/src/github.com/getoutreach/lintroller/bin/lintroller -config lintroller.yaml ./... 2>&1 | sed "s#^$(pwd)/##"
 ```
+
+**Note:** Piping the output of the command to `sed` will render a non-zero exit code into a zero exit code by default. To fix
+this, you will need to first run `set -o pipefail`.
 <!--- EndBlock(custom) -->
 
 ## Dependencies and Setup
