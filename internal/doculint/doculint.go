@@ -151,6 +151,9 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 
 			switch expr := n.(type) {
 			case *ast.FuncDecl:
+				funcStart = passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line
+				funcEnd = passWithNoLint.Fset.PositionFor(expr.End(), false).Line
+
 				if !validateFunctions {
 					// validateFunctions flag was set to false, ignore all functions.
 					return true
@@ -160,9 +163,6 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 					// Ignore func main in main package.
 					return true
 				}
-
-				funcStart = passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line
-				funcEnd = passWithNoLint.Fset.PositionFor(expr.End(), false).Line
 
 				// The reason a 1 is added is to account for single-line functions (edge case).
 				// This also doesn't affect non-single line functions, it will just account for
