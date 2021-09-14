@@ -104,6 +104,10 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 	// the same name as the package. This is where the package comment should exist.
 	var packageHasFileWithSameName bool
 
+	// allGenerated is a flag to denote whether or not an entire package was generated.
+	// This will bypass the package comment reporting.
+	allGenerated := true
+
 	// Validate the package name of the current pass, which is a single go package.
 	validatePackageName(passWithNoLint, passWithNoLint.Pkg.Name())
 
@@ -115,6 +119,10 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		if common.IsGenerated(file) {
 			continue
 		}
+
+		// We've made it past the generated check, make sure to denote that at least one file in the
+		// package was not generated.
+		allGenerated = false
 
 		if passWithNoLint.Pkg.Name() == common.PackageMain || !validatePackages {
 			// Ignore the main package, it doesn't need a package comment, and ignore package comment
@@ -144,11 +152,11 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 			}
 		}
 
-		ast.Inspect(file, func(n ast.Node) bool {
-			// funcStart and funcEnd keep track of the most recently encountered function start and
-			// end locations.
-			var funcStart, funcEnd int
+		// funcStart and funcEnd keep track of the most recently encountered function start and
+		// end locations.
+		var funcStart, funcEnd int
 
+		ast.Inspect(file, func(n ast.Node) bool {
 			switch expr := n.(type) {
 			case *ast.FuncDecl:
 				funcStart = passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line
@@ -174,8 +182,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 					validateFuncDecl(passWithNoLint, expr)
 				}
 			case *ast.GenDecl:
-				if passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line > funcStart &&
-					passWithNoLint.Fset.PositionFor(expr.End(), false).Line < funcEnd {
+				if pos := passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line; pos >= funcStart && pos <= funcEnd {
 					// Ignore general declarations that are within a function.
 					return true
 				}
@@ -192,8 +199,10 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		})
 	}
 
-	if !packageHasFileWithSameName {
-		passWithNoLint.Reportf(0, "package \"%s\" has no file with the same name containing package comment", passWithNoLint.Pkg.Name())
+	if !allGenerated {
+		if !packageHasFileWithSameName {
+			passWithNoLint.Reportf(0, "package \"%s\" has no file with the same name containing package comment", passWithNoLint.Pkg.Name())
+		}
 	}
 
 	return nil, nil
@@ -334,7 +343,7 @@ func validateGenDeclVariables(reporter nolint.Reporter, expr *ast.GenDecl) {
 			}
 
 			if doc == nil {
-				reporter.Reportf(vs.Pos(), "variable \"%s\" has no comment associated with it", name)
+				reporter.Reportf(vs.Pos(), "variable \"%s\" has no comment associated with it")
 				continue
 			}
 
