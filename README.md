@@ -59,9 +59,7 @@ Running as a standalone tool can be useful if you want to pass configuration to 
 be restricted to the rules that vettool implicit applies to a binary:
 
 ```shell
-# The path to the binary may not necessarily be the same on your machine
-~/go/src/github.com/getoutreach/lintroller/bin/lintroller -config lintroller.yaml ./...
-```
+lintroller -config lintroller.yaml ./...
 
 The structure for the config yaml can be found in `internal/config/config.go`.
 
