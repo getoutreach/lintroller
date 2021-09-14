@@ -130,7 +130,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 
 			// If the current file name matches the package name, examine the comment
 			// that should exist within it.
-			if fn == passWithNoLint.Pkg.Name() {
+			if fn == passWithNoLint.Pkg.Name() || fn == common.DocFilenameWithoutPath {
 				packageHasFileWithSameName = true
 
 				if file.Doc == nil {

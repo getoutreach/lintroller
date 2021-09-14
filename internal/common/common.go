@@ -12,6 +12,10 @@ import (
 // PackageMain is a constant denoting the name of the "main" package in a Go program.
 const PackageMain = "main"
 
+// DocFilenameWithoutPath is the name of a file that can potentially hold a package
+// document as opposed to a file of the same name as the package.
+const DocFilenameWithoutPath = "doc"
+
 // FuncMain is a constant denoting the name of the "main" function that exists in
 // packageMain of a Go program.
 const FuncMain = "main"
