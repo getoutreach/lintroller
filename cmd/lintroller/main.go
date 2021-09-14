@@ -20,7 +20,7 @@ import (
 	"golang.org/x/tools/go/analysis/unitchecker"
 )
 
-func main() {
+func main() { //nolint:funlen // Why: It wouldn't make sense to split anymore of this into separate functions.
 	// This needs to be set so that when the analyzers parse their flags they won't error due to
 	// an unknown flag being passed.
 	_ = flag.String("config", "", "the path to the config file for lintroller. if this is not set it will be assumed lintroller is running as a vet tool")
