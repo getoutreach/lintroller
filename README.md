@@ -71,8 +71,7 @@ information being present. There is no way to trim these programmatically at the
 to make the output look a little better:
 
 ```shell
-# The path to the binary may not necessarily be the same on your machine
-~/go/src/github.com/getoutreach/lintroller/bin/lintroller -config lintroller.yaml ./... 2>&1 | sed "s#^$(pwd)/##"
+lintroller -config lintroller.yaml ./... 2>&1 | sed "s#^$(pwd)/##"
 ```
 
 **Note:** Piping the output of the command to `sed` will render a non-zero exit code into a zero exit code by default. To fix
