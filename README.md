@@ -52,6 +52,30 @@ To get information regarding singular linters and their flags you can run the fo
 # Shows the flags, descriptions, and defaults for an individual linter.
 ./bin/lintroller help <linter>
 ```
+
+## Running as a Standalone Tool (not vettool)
+
+Running as a standalone tool can be useful if you want to pass configuration to the linter via a yaml config file and not
+be restricted to the rules that vettool implicit applies to a binary:
+
+```shell
+lintroller -config lintroller.yaml ./...
+
+The structure for the config yaml can be found in `internal/config/config.go`.
+
+## Trimming Absolute Path into Relative Path on Reporting
+
+By default the `*analysis.Pass.Reportf` function will report the absolute path of any linter errors that fire during the
+linting process. This is kind of cumbersome, unnecessary, and results in errors that are harder to read due to extraneous
+information being present. There is no way to trim these programmatically at the current time, but you can do some bash-fu
+to make the output look a little better:
+
+```shell
+lintroller -config lintroller.yaml ./... 2>&1 | sed "s#^$(pwd)/##"
+```
+
+**Note:** Piping the output of the command to `sed` will render a non-zero exit code into a zero exit code by default. To fix
+this, you will need to first run `set -o pipefail`.
 <!--- EndBlock(custom) -->
 
 ## Dependencies and Setup

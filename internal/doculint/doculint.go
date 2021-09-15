@@ -27,6 +27,21 @@ var Analyzer = analysis.Analyzer{
 	Run:  doculint,
 }
 
+// NewAnalyzerWithOptions returns the Analyzer package-level variable, with the options
+// that would have been defined via flags if this was ran as a vet tool. This is so the
+// analyzers can be ran outside of the context of a vet tool and config can be gathered
+// from elsewhere.
+func NewAnalyzerWithOptions(_minFunLen int, _validatePackages, _validateFunctions, _validateVariables, _validateConstants, _validateTypes bool) *analysis.Analyzer {
+	minFunLen = _minFunLen
+	validatePackages = _validatePackages
+	validateFunctions = _validateFunctions
+	validateVariables = _validateVariables
+	validateConstants = _validateConstants
+	validateTypes = _validateTypes
+
+	return &Analyzer
+}
+
 // Variable block to keep track of flags whose values are collected at runtime. See the
 // init function that immediately proceeds this block to see more.
 var (
@@ -34,21 +49,64 @@ var (
 	// the minimum function length that doculint will report on if said function has no
 	// related documentation.
 	minFunLen int
+
+	// validatePackages is a variable that gets collected via flags. This variable contains
+	// a flag that denotes whether or not the linter should validate that packages have
+	// satisfactory comments.
+	validatePackages bool
+
+	// validateFunctions is a variable that gets collected via flags. This variable contains
+	// a flag that denotes whether or not the linter should validate that functions have
+	// satisfactory comments.
+	validateFunctions bool
+
+	// validateVariables is a variable that gets collected via flags. This variable contains
+	// a flag that denotes whether or not the linter should validate that variables have
+	// satisfactory comments.
+	validateVariables bool
+
+	// validateConstants is a variable that gets collected via flags. This variable contains
+	// a flag that denotes whether or not the linter should validate that constants have
+	// satisfactory comments.
+	validateConstants bool
+
+	// validateTypes is a variable that gets collected via flags. This variable contains a
+	// flag that denotes whether or not the linter should validate that types have
+	// satisfactory comments.
+	validateTypes bool
 )
 
 func init() { //nolint:gochecknoinits
 	Analyzer.Flags.IntVar(&minFunLen, "minFunLen", 10, "the minimum function length that doculint will report on if said function has no related documentation")
+	Analyzer.Flags.BoolVar(&validatePackages, "validatePackages", true, "a boolean flag that denotes whether or not to validate package comments")
+	Analyzer.Flags.BoolVar(&validateFunctions, "validateFunctions", true, "a boolean flag that denotes whether or not to validate function comments")
+	Analyzer.Flags.BoolVar(&validateVariables, "validateVariables", true, "a boolean flag that denotes whether or not to validate variable comments")
+	Analyzer.Flags.BoolVar(&validateConstants, "validateConstants", true, "a boolean flag that denotes whether or not to validate constant comments")
+	Analyzer.Flags.BoolVar(&validateTypes, "validateTypes", true, "a boolean flag that denotes whether or not to validate type comments")
+
+	if minFunLen == 0 {
+		minFunLen = 10
+	}
 }
 
 // doculint is the function that gets passed to the Analyzer which runs the actual
 // analysis for the doculint linter on a set of files.
 func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
+	// Ignore test packages.
+	if common.IsTestPackage(pass) {
+		return nil, nil
+	}
+
 	// Wrap pass with nolint.Pass to take nolint directives into account.
 	passWithNoLint := nolint.PassWithNoLint(name, pass)
 
 	// Variable to keep track of whether or not this current package has a file with
 	// the same name as the package. This is where the package comment should exist.
 	var packageHasFileWithSameName bool
+
+	// allGenerated is a flag to denote whether or not an entire package was generated.
+	// This will bypass the package comment reporting.
+	allGenerated := true
 
 	// Validate the package name of the current pass, which is a single go package.
 	validatePackageName(passWithNoLint, passWithNoLint.Pkg.Name())
@@ -57,8 +115,18 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		// Pull file into a local variable so it can be passed as a parameter safely.
 		file := file
 
-		if passWithNoLint.Pkg.Name() == common.PackageMain {
-			// Ignore the main package, it doesn't need a package comment.
+		// Ignore generated files.
+		if common.IsGenerated(file) {
+			continue
+		}
+
+		// We've made it past the generated check, make sure to denote that at least one file in the
+		// package was not generated.
+		allGenerated = false
+
+		if passWithNoLint.Pkg.Name() == common.PackageMain || !validatePackages {
+			// Ignore the main package, it doesn't need a package comment, and ignore package comment
+			// checks if the validatePackages flag was set to false.
 			packageHasFileWithSameName = true
 		} else {
 			// Get current filepath.
@@ -70,7 +138,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 
 			// If the current file name matches the package name, examine the comment
 			// that should exist within it.
-			if fn == passWithNoLint.Pkg.Name() {
+			if fn == passWithNoLint.Pkg.Name() || fn == common.DocFilenameWithoutPath {
 				packageHasFileWithSameName = true
 
 				if file.Doc == nil {
@@ -84,27 +152,41 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 			}
 		}
 
+		// funcStart and funcEnd keep track of the most recently encountered function start and
+		// end locations.
+		var funcStart, funcEnd int
+
 		ast.Inspect(file, func(n ast.Node) bool {
 			switch expr := n.(type) {
 			case *ast.FuncDecl:
+				funcStart = passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line
+				funcEnd = passWithNoLint.Fset.PositionFor(expr.End(), false).Line
+
+				if !validateFunctions {
+					// validateFunctions flag was set to false, ignore all functions.
+					return true
+				}
+
 				if passWithNoLint.Pkg.Name() == common.PackageMain && expr.Name.Name == common.FuncMain {
 					// Ignore func main in main package.
 					return true
 				}
 
-				start := passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line
-				end := passWithNoLint.Fset.PositionFor(expr.End(), false).Line
-
 				// The reason a 1 is added is to account for single-line functions (edge case).
 				// This also doesn't affect non-single line functions, it will just account for
 				// the trailing } which is what most people would expect anyways when providing
 				// a minimum function length to validate against.
-				if (end - start + 1) >= minFunLen {
+				if (funcEnd - funcStart + 1) >= minFunLen {
 					// Run through function declaration validation rules if the minimum function
 					// length is met or exceeded.
 					validateFuncDecl(passWithNoLint, expr)
 				}
 			case *ast.GenDecl:
+				if pos := passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line; pos >= funcStart && pos <= funcEnd {
+					// Ignore general declarations that are within a function.
+					return true
+				}
+
 				// Run through general declaration validation rules, currently these
 				// only apply to constants, type, and variable declarations, as you
 				// will see if you dig into the proceeding function call.
@@ -117,8 +199,10 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		})
 	}
 
-	if !packageHasFileWithSameName {
-		passWithNoLint.Reportf(0, "package \"%s\" has no file with the same name containing package comment", passWithNoLint.Pkg.Name())
+	if !allGenerated {
+		if !packageHasFileWithSameName {
+			passWithNoLint.Reportf(0, "package \"%s\" has no file with the same name containing package comment", passWithNoLint.Pkg.Name())
+		}
 	}
 
 	return nil, nil
@@ -130,11 +214,20 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 func validateGenDecl(reporter nolint.Reporter, expr *ast.GenDecl) {
 	switch expr.Tok { //nolint:exhaustive
 	case token.CONST:
-		validateGenDeclConstants(reporter, expr)
+		if validateConstants {
+			// validateConstants flag was set to true, go ahead and validate constants.
+			validateGenDeclConstants(reporter, expr)
+		}
 	case token.TYPE:
-		validateGenDeclTypes(reporter, expr)
+		if validateTypes {
+			// validateTypes flag was set to true, go ahead and validate types.
+			validateGenDeclTypes(reporter, expr)
+		}
 	case token.VAR:
-		validateGenDeclVariables(reporter, expr)
+		if validateVariables {
+			// validateVariables flag was set to true, go ahead and validate variables.
+			validateGenDeclVariables(reporter, expr)
+		}
 	}
 }
 
@@ -156,10 +249,10 @@ func validateGenDeclConstants(reporter nolint.Reporter, expr *ast.GenDecl) {
 			if len(vs.Names) > 1 {
 				var names []string
 				for j := range vs.Names {
-					names = append(names, vs.Names[j].Name)
+					names = append(names, fmt.Sprintf("\"%s\"", vs.Names[j].Name))
 				}
 
-				reporter.Reportf(vs.Pos(), "constants \"%s\" should be separated and each have a comment associated with them", strings.Join(names, ", "))
+				reporter.Reportf(vs.Pos(), "constants %s should be separated and each have a comment associated with them", strings.Join(names, ", "))
 				continue
 			}
 
@@ -234,10 +327,10 @@ func validateGenDeclVariables(reporter nolint.Reporter, expr *ast.GenDecl) {
 			if len(vs.Names) > 1 {
 				var names []string
 				for j := range vs.Names {
-					names = append(names, vs.Names[j].Name)
+					names = append(names, fmt.Sprintf("\"%s\"", vs.Names[j].Name))
 				}
 
-				reporter.Reportf(vs.Pos(), "variables \"%s\" should be separated and each have a comment associated with them", strings.Join(names, ", "))
+				reporter.Reportf(vs.Pos(), "variables %s should be separated and each have a comment associated with them", strings.Join(names, ", "))
 				continue
 			}
 
@@ -250,7 +343,7 @@ func validateGenDeclVariables(reporter nolint.Reporter, expr *ast.GenDecl) {
 			}
 
 			if doc == nil {
-				reporter.Reportf(vs.Pos(), "variable \"%s\" has no comment associated with it", name)
+				reporter.Reportf(vs.Pos(), "variable \"%s\" has no comment associated with it")
 				continue
 			}
 

@@ -4,8 +4,9 @@ package copyright
 import (
 	"regexp"
 	"strings"
+	"sync"
 
-	"github.com/pkg/errors"
+	"github.com/getoutreach/lintroller/internal/common"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -26,67 +27,138 @@ var Analyzer = analysis.Analyzer{
 	Run:  copyright,
 }
 
+// NewAnalyzerWithOptions returns the Analyzer package-level variable, with the options
+// that would have been defined via flags if this was ran as a vet tool. This is so the
+// analyzers can be ran outside of the context of a vet tool and config can be gathered
+// from elsewhere.
+func NewAnalyzerWithOptions(_text, _pattern string) *analysis.Analyzer {
+	text = strings.TrimSpace(_text)
+	pattern = strings.TrimSpace(_pattern)
+	return &Analyzer
+}
+
 // Variable block to keep track of flags whose values are collected at runtime. See the
 // init function that immediately proceeds this block to see more.
 var (
-	// copyrightString is a variable that gets collected via flags. This variable contains
-	// the copyright string required at the top of each .go file.
-	copyrightString string
+	// text is a variable that gets collected via flags. This variable contains the copyright
+	// string as plaintext that is required to be at the top of each .go file.
+	text string
 
-	// regularExpression is a variable that gets collected via flags. This variable denotes
-	// whether or not the copyrightString passed via the copyright flag is a regular
-	// expression or just a normal string.
-	regularExpression bool
+	// pattern is a variable that gets collected via flags. This variable contains the copyright
+	// string as a regular expression pattern that is required to be at the top of each .go file.
+	pattern string
 )
-
-func init() { //nolint:gochecknoinits
-	Analyzer.Flags.StringVar(&copyrightString, "copyright", "", "the copyright string required at the top of each .go file. if empty this linter is a no-op")
-	Analyzer.Flags.BoolVar(&regularExpression, "regex", false, "denotes whether or not the copyright string is a regular expression")
-}
 
 // comparer is a convience type used to conditionally compare using either a string or a
 // compiled regular expression based off of the existence of the regular expression.
 type comparer struct {
-	copyrightString string
-	copyrightRegex  *regexp.Regexp
+	text    string
+	pattern *regexp.Regexp
+
+	uniqueCopyrightsInternal map[string]struct{}
+
+	once sync.Once
+}
+
+// init gets passed to c.once to initialize the comparer using values pulled from flags.
+func (c *comparer) init() {
+	// Grab the value passed via flag. Use pattern if it exists, if not, default to text.
+	if pattern != "" {
+		c.pattern = regexp.MustCompile(pattern)
+	} else {
+		c.text = text
+	}
+
+	// Initialize an empty uniqueCopyrightsInternal map.
+	c.uniqueCopyrightsInternal = make(map[string]struct{})
 }
 
 // compare uses the struct fields stored in the receiver to conditionally compare a given
 // string value.
 func (c *comparer) compare(value string) bool {
-	// If the copyright regular expression is non-nil, use that to
-	// compare.
-	if c.copyrightRegex != nil {
-		return c.copyrightRegex.MatchString(value)
+	c.once.Do(c.init)
+
+	// If the copyright regular expression is non-nil, use that to compare.
+	if c.pattern != nil {
+		return c.pattern.MatchString(value)
 	}
 
 	// Else, use the copyright string to compare.
-	if c.copyrightString == value {
+	if c.text == value {
 		return true
 	}
 	return false
 }
 
+// stringMatchType returns the match type the comparer is using as a string (text or pattern),
+// for reporting purposes.
+func (c *comparer) stringMatchType() string {
+	c.once.Do(c.init)
+
+	if c.pattern != nil {
+		return "regular expression"
+	}
+	return "string"
+}
+
+// stringMatchType returns the literal string (either text or pattern) it is using to compare,
+// for reporting purposes.
+func (c *comparer) stringMatchLiteral() string {
+	if c.pattern != nil {
+		return c.pattern.String()
+	}
+	return c.text
+}
+
+// trackUniqueness takes a copyright string and checks to see if we've already encountered
+// it. If it we have, this is a no-op, if we haven't, we mark it as seen for reporting
+// purposes at the end of the run.
+func (c *comparer) trackUniqueness(copyrightString string) {
+	if _, exists := c.uniqueCopyrightsInternal[copyrightString]; !exists {
+		c.uniqueCopyrightsInternal[copyrightString] = struct{}{}
+	}
+}
+
+// uniqueCopyrights returns a slice of all of the unqiue copyright strings found.
+func (c *comparer) uniqueCopyrights() []string {
+	var unique []string
+	for copyrightString := range c.uniqueCopyrightsInternal {
+		unique = append(unique, copyrightString)
+	}
+	return unique
+}
+
+func init() { //nolint:gochecknoinits
+	// Setup flags.
+	Analyzer.Flags.StringVar(&text, "text", "", "the copyright string required at the top of each .go file. if this and pattern are empty the linter is a no-op")
+	Analyzer.Flags.StringVar(&pattern, "pattern", "", "the copyright pattern (as a regular expression) required at the top of each .go file. if this and pattern are empty the linter is a no-op. pattern takes precedence over text if both are supplied")
+
+	// Trim space around the passed in variables just in case.
+	text = strings.TrimSpace(text)
+	pattern = strings.TrimSpace(pattern)
+}
+
 // copyright is the function that gets passed to the Analyzer which runs the actual
 // analysis for the copyright linter on a set of files.
 func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
-	if copyrightString == "" {
+	// Ignore test packages.
+	if common.IsTestPackage(pass) {
 		return nil, nil
 	}
 
-	c := comparer{
-		copyrightString: copyrightString,
+	if text == "" && pattern == "" {
+		return nil, nil
 	}
 
-	if regularExpression {
-		reCopyright, err := regexp.Compile(c.copyrightString)
-		if err != nil {
-			return nil, errors.Wrap(err, "compile copyright regular expression")
-		}
-		c.copyrightRegex = reCopyright
-	}
+	// comparer to use on this pass.
+	var c comparer
 
 	for _, file := range pass.Files {
+		// Ignore generated files.
+		if common.IsGenerated(file) {
+			continue
+		}
+
 		fp := pass.Fset.PositionFor(file.Package, false).Filename
 
 		// Variable to keep track of whether or not the copyright string was found at the
@@ -99,10 +171,16 @@ func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 				continue
 			}
 
+			lineOneText := strings.TrimSpace(commentGroup.Text())
+
 			// Set the value of the foundCopyright to the comparison of this comment's text
 			// to the stored copyrightString value or the regular expression compiled from
 			// it.
-			foundCopyright = c.compare(strings.TrimSpace(commentGroup.Text()))
+			foundCopyright = c.compare(lineOneText)
+
+			if foundCopyright {
+				c.trackUniqueness(lineOneText)
+			}
 
 			// We can safely break here because if we got here, regardless on the outcome of
 			// the previous statement, we know this is the only comment that matters because
@@ -112,13 +190,12 @@ func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		}
 
 		if !foundCopyright {
-			matchType := "string"
-			if regularExpression {
-				matchType = "regular expression"
-			}
-
-			pass.Reportf(0, "file \"%s\" does not contain the required copyright %s [%s] (sans-brackets) as a comment on line 1", fp, matchType, copyrightString)
+			pass.Reportf(0, "file \"%s\" does not contain the required copyright %s [%s] (sans-brackets) as a comment on line 1", fp, c.stringMatchType(), c.stringMatchLiteral())
 		}
+	}
+
+	if uniqueCopyrights := c.uniqueCopyrights(); len(uniqueCopyrights) > 1 {
+		pass.Reportf(0, "found multiple unique versions of copyright strings, consider consolidating to one version: %+v", uniqueCopyrights)
 	}
 
 	return nil, nil

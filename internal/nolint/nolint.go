@@ -46,6 +46,7 @@ func (n *noLint) Matches(position token.Position) bool {
 // directly, it will essentially be a no-op wrapper around *analysis.Pass.
 type Pass struct {
 	noLints []noLint
+	linter  string
 
 	*analysis.Pass
 }
@@ -54,7 +55,8 @@ type Pass struct {
 // identified for the provided linter name.
 func PassWithNoLint(linter string, pass *analysis.Pass) *Pass {
 	p := Pass{
-		Pass: pass,
+		Pass:   pass,
+		linter: linter,
 	}
 
 	for _, file := range p.Files {
@@ -92,5 +94,5 @@ func (p *Pass) Reportf(pos token.Pos, format string, args ...interface{}) {
 		}
 	}
 
-	p.Pass.Reportf(pos, format, args...)
+	p.Pass.Reportf(pos, format+" (%s)", append(args, p.linter)...)
 }

@@ -47,6 +47,15 @@ var Analyzer = analysis.Analyzer{
 	Run:  header,
 }
 
+// NewAnalyzerWithOptions returns the Analyzer package-level variable, with the options
+// that would have been defined via flags if this was ran as a vet tool. This is so the
+// analyzers can be ran outside of the context of a vet tool and config can be gathered
+// from elsewhere.
+func NewAnalyzerWithOptions(_rawFields string) *analysis.Analyzer {
+	rawFields = _rawFields
+	return &Analyzer
+}
+
 // Variable block to keep track of flags whose values are collected at runtime. See the
 // init function that immediately proceeds this block to see more.
 var (
@@ -63,10 +72,20 @@ func init() { //nolint:gochecknoinits
 // header is the function that gets passed to the Analyzer which runs the actual
 // analysis for the header linter on a set of files.
 func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
+	// Ignore test packages.
+	if common.IsTestPackage(pass) {
+		return nil, nil
+	}
+
 	fields := strings.Split(rawFields, ",")
 	validFields := make(map[string]bool, len(fields))
 
 	for _, file := range pass.Files {
+		// Ignore generated files.
+		if common.IsGenerated(file) {
+			continue
+		}
+
 		if pass.Pkg.Name() == common.PackageMain {
 			// Ignore the main package, there should really one ever be one file in the
 			// main package and it should contain func main, leaving implementation to
