@@ -81,8 +81,8 @@ func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 	validFields := make(map[string]bool, len(fields))
 
 	for _, file := range pass.Files {
-		// Ignore generated files.
-		if common.IsGenerated(file) {
+		// Ignore generated files and test files.
+		if common.IsGenerated(file) || common.IsTestFile(pass, file) {
 			continue
 		}
 

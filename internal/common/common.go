@@ -44,6 +44,12 @@ func IsGenerated(file *ast.File) bool {
 	return false
 }
 
+// IsTestFile returns true if the filename is either test_*.go or *_test.go.
+func IsTestFile(pass *analysis.Pass, file *ast.File) bool {
+	fn := pass.Fset.PositionFor(file.Package, false).Filename
+	return strings.HasPrefix(fn, "test_") || strings.HasSuffix(fn, "_test")
+}
+
 // IsTestPackage determines whether or not the package for the current pass is a test
 // package. The analysis.Analyzer is already smart enough to ignore "*_test.go" files,
 // but sometimes there are explicit packages only meant to be used in tests. These are,

@@ -45,8 +45,8 @@ func why(pass *analysis.Pass) (interface{}, error) {
 	passWithNoLint := nolint.PassWithNoLint(name, pass)
 
 	for _, file := range passWithNoLint.Files {
-		// Ignore generated files.
-		if common.IsGenerated(file) {
+		// Ignore generated files and test files.
+		if common.IsGenerated(file) || common.IsTestFile(passWithNoLint.Pass, file) {
 			continue
 		}
 
