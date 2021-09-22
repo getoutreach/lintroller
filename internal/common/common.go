@@ -46,7 +46,7 @@ func IsGenerated(file *ast.File) bool {
 
 // IsTestFile returns true if the filename is either test_*.go or *_test.go.
 func IsTestFile(pass *analysis.Pass, file *ast.File) bool {
-	fn := pass.Fset.PositionFor(file.Package, false).Filename
+	fn := strings.TrimSuffix(pass.Fset.PositionFor(file.Package, false).Filename, ".go")
 	return strings.HasPrefix(fn, "test_") || strings.HasSuffix(fn, "_test")
 }
 
