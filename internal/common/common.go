@@ -63,7 +63,7 @@ func IsTestPackage(pass *analysis.Pass) bool {
 // LoadOtherFilesIntoFset loads all files found in *analysis.Pass.OtherFiles into the
 // Fset in *analysis.Pass.
 func LoadOtherFilesIntoFset(pass *analysis.Pass) error {
-	for i := range pass.OtherFiles {
+	for _, fn := range pass.OtherFiles {
 
 		content, err := ioutil.ReadFile(fn)
 		if err != nil {
