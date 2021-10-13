@@ -61,8 +61,7 @@ func IsTestPackage(pass *analysis.Pass) bool {
 }
 
 // LoadOtherFilesIntoFset loads all files found in *analysis.Pass.OtherFiles into the
-// Fset in *analysis.Pass. This effectively loads all symbols in files protected by
-// build tags into the Fset.
+// Fset in *analysis.Pass.
 func LoadOtherFilesIntoFset(pass *analysis.Pass) error {
 	for i := range pass.OtherFiles {
 		fn := pass.OtherFiles[i]
