@@ -4,8 +4,10 @@ package common
 
 import (
 	"go/ast"
+	"io/ioutil"
 	"strings"
 
+	"github.com/pkg/errors"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -56,4 +58,23 @@ func IsTestFile(pass *analysis.Pass, file *ast.File) bool {
 // or at least should be, suffixed with "test" (usually "_test").
 func IsTestPackage(pass *analysis.Pass) bool {
 	return strings.HasSuffix(pass.Pkg.Name(), "test")
+}
+
+// LoadOtherFilesIntoFset loads all files found in *analysis.Pass.OtherFiles into the
+// Fset in *analysis.Pass. This effectively loads all symbols in files protected by
+// build tags into the Fset.
+func LoadOtherFilesIntoFset(pass *analysis.Pass) error {
+	for i := range pass.OtherFiles {
+		fn := pass.OtherFiles[i]
+
+		content, err := ioutil.ReadFile(fn)
+		if err != nil {
+			return errors.Wrapf(err, "return file content for \"%s\"", fn)
+		}
+
+		tf := pass.Fset.AddFile(fn, -1, len(content))
+		tf.SetLinesForContent(content)
+	}
+
+	return nil
 }
