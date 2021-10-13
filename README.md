@@ -60,6 +60,7 @@ be restricted to the rules that vettool implicit applies to a binary:
 
 ```shell
 lintroller -config lintroller.yaml ./...
+```
 
 The structure for the config yaml can be found in `internal/config/config.go`.
 
