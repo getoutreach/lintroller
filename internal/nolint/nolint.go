@@ -64,6 +64,16 @@ func PassWithNoLint(linter string, pass *analysis.Pass) *Pass {
 			for _, comment := range commentGroup.List {
 				text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
 
+				// whySlashesIdx finds the next set of slashes if the nolint directive is in the form
+				// of:
+				//	nolint: linter1,linter2 // Why: reasoning
+				// If these slashes exist we use the index to trim them and all text following it off
+				// of the string, effectively producing:
+				//	nolint: linter1,linter2
+				if whySlashesIdx := strings.Index(text, "//"); whySlashesIdx != -1 {
+					text = strings.TrimSpace(text[:whySlashesIdx])
+				}
+
 				if strings.HasPrefix(text, directive) {
 					linters := strings.Split(strings.TrimSpace(strings.TrimPrefix(text, directive)), ",")
 
