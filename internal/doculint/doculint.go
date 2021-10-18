@@ -108,9 +108,6 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 	// This will bypass the package comment reporting.
 	allGenerated := true
 
-	// Validate the package name of the current pass, which is a single go package.
-	validatePackageName(passWithNoLint, passWithNoLint.Pkg.Name())
-
 	for _, file := range passWithNoLint.Files {
 		// Pull file into a local variable so it can be passed as a parameter safely.
 		file := file
@@ -141,12 +138,15 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 			if fn == passWithNoLint.Pkg.Name() || fn == common.DocFilenameWithoutPath {
 				packageHasFileWithSameName = true
 
+				// This is the file we'd report the bad package name on, so run the validation here.
+				validatePackageName(passWithNoLint, file.Package, passWithNoLint.Pkg.Name())
+
 				if file.Doc == nil {
-					passWithNoLint.Reportf(0, "package \"%s\" has no comment associated with it in \"%s.go\"", passWithNoLint.Pkg.Name(), passWithNoLint.Pkg.Name())
+					passWithNoLint.Reportf(file.Package, "package \"%s\" has no comment associated with it in \"%s.go\"", passWithNoLint.Pkg.Name(), passWithNoLint.Pkg.Name())
 				} else {
 					expectedPrefix := fmt.Sprintf("Package %s", passWithNoLint.Pkg.Name())
 					if !strings.HasPrefix(strings.TrimSpace(file.Doc.Text()), expectedPrefix) {
-						passWithNoLint.Reportf(0, "comment for package \"%s\" should begin with \"%s\"", passWithNoLint.Pkg.Name(), expectedPrefix)
+						passWithNoLint.Reportf(file.Package, "comment for package \"%s\" should begin with \"%s\"", passWithNoLint.Pkg.Name(), expectedPrefix)
 					}
 				}
 			}
@@ -374,12 +374,12 @@ func validateFuncDecl(reporter nolint.Reporter, expr *ast.FuncDecl) {
 
 // validatePackageName ensures that a given package name follows the conventions that can
 // be read about here: https://blog.golang.org/package-names
-func validatePackageName(reporter nolint.Reporter, pkg string) {
+func validatePackageName(reporter nolint.Reporter, pos token.Pos, pkg string) {
 	if strings.ContainsAny(pkg, "_-") {
-		reporter.Reportf(0, "package \"%s\" should not contain - or _ in name", pkg)
+		reporter.Reportf(pos, "package \"%s\" should not contain - or _ in name", pkg)
 	}
 
 	if pkg != strings.ToLower(pkg) {
-		reporter.Reportf(0, "package \"%s\" should be all lowercase", pkg)
+		reporter.Reportf(pos, "package \"%s\" should be all lowercase", pkg)
 	}
 }

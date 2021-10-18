@@ -171,7 +171,9 @@ func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 				continue
 			}
 
-			lineOneText := strings.TrimSpace(commentGroup.Text())
+			// Get the text out of the first line, trimming the // prefix and space before and after
+			// that may or may not exist.
+			lineOneText := strings.TrimSpace(strings.TrimPrefix(commentGroup.List[0].Text, "//"))
 
 			// Set the value of the foundCopyright to the comparison of this comment's text
 			// to the stored copyrightString value or the regular expression compiled from
