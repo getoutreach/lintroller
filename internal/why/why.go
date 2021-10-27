@@ -31,13 +31,13 @@ var Analyzer = analysis.Analyzer{
 // ensures it contains a // Why: <reason> immediately proceeding the nolint directive.
 //
 // For examples, see https://regex101.com/r/I41sfC/1
-var reNoLintWhy = regexp.MustCompile(`^nolint:\s?[\w\-,]+\s?\/\/\s?Why:\s?.+$`) //nolint:regexpSimplify,gocritic // Why: It is suggesting bad syntax by not escaping each of the forward slashes.
+var reNoLintWhy = regexp.MustCompile(`^nolint:\s?[\w\-,]+\s?\/\/\s?Why:\s?.+$`) //nolint:gocritic // Why: It is suggesting bad syntax by not escaping each of the forward slashes.
 
 // reNoLintNaked is the regular expression that every nolint comment is checked against
 // to ensure no naked nolint directives exist.
 //
 // For examples, see https://regex101.com/r/XJY8md/1
-var reNoLintNaked = regexp.MustCompile(`^nolint(\s*\/\/\s*Why:.*)*$`)
+var reNoLintNaked = regexp.MustCompile(`^nolint(\s*\/\/\s*Why:.*)*$`) //nolint:gocritic // Why: It is suggesting bad syntax by not escaping each of the forward slashes.
 
 // why is the function that gets passed to the Analyzer which runs the actual analysis
 // for the why linter on a set of files.
