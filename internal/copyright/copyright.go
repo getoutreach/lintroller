@@ -196,9 +196,5 @@ func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		}
 	}
 
-	if uniqueCopyrights := c.uniqueCopyrights(); len(uniqueCopyrights) > 1 {
-		pass.Reportf(0, "found multiple unique versions of copyright strings, consider consolidating to one version: %+v", uniqueCopyrights)
-	}
-
 	return nil, nil
 }
