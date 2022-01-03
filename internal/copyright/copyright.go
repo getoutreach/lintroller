@@ -119,15 +119,6 @@ func (c *comparer) trackUniqueness(copyrightString string) {
 	}
 }
 
-// uniqueCopyrights returns a slice of all of the unqiue copyright strings found.
-func (c *comparer) uniqueCopyrights() []string {
-	var unique []string
-	for copyrightString := range c.uniqueCopyrightsInternal {
-		unique = append(unique, copyrightString)
-	}
-	return unique
-}
-
 func init() { //nolint:gochecknoinits
 	// Setup flags.
 	Analyzer.Flags.StringVar(&text, "text", "", "the copyright string required at the top of each .go file. if this and pattern are empty the linter is a no-op")
