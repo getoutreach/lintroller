@@ -38,7 +38,8 @@ const FuncInit = "init"
 func IsGenerated(file *ast.File) bool {
 	for _, group := range file.Comments {
 		for _, comment := range group.List {
-			if strings.Contains(strings.ToLower(comment.Text), "code generated") {
+			s := strings.ToLower(comment.Text)
+			if strings.Contains(s, "code generated") || strings.Contains(s, "go:cgo_import_dynamic") {
 				return true
 			}
 		}
