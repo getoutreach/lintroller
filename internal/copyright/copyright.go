@@ -121,7 +121,9 @@ func (c *comparer) trackUniqueness(copyrightString string) {
 
 func init() { //nolint:gochecknoinits
 	// Setup flags.
+	//nolint:lll // Why: usage long
 	Analyzer.Flags.StringVar(&text, "text", "", "the copyright string required at the top of each .go file. if this and pattern are empty the linter is a no-op")
+	//nolint:lll // Why: usage long
 	Analyzer.Flags.StringVar(&pattern, "pattern", "", "the copyright pattern (as a regular expression) required at the top of each .go file. if this and pattern are empty the linter is a no-op. pattern takes precedence over text if both are supplied")
 
 	// Trim space around the passed in variables just in case.
@@ -183,7 +185,9 @@ func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		}
 
 		if !foundCopyright {
-			pass.Reportf(0, "file \"%s\" does not contain the required copyright %s [%s] (sans-brackets) as a comment on line 1", fp, c.stringMatchType(), c.stringMatchLiteral())
+			pass.Reportf(0,
+				"file \"%s\" does not contain the required copyright %s [%s] (sans-brackets) as a comment on line 1",
+				fp, c.stringMatchType(), c.stringMatchLiteral())
 		}
 	}
 

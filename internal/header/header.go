@@ -154,7 +154,11 @@ func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 		for field, valid := range validFields {
 			if !valid {
 				// Required field not found, report it.
-				pass.Reportf(0, "file \"%s\" does not contain the required header key \"%s\" and corresponding value existing before the package keyword", fp, field)
+				pass.Reportf(
+					0,
+					"file \"%s\" does not contain the required header key \"%s\" and corresponding value existing before the package keyword",
+					fp,
+					field)
 			}
 		}
 	}
