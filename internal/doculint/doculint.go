@@ -31,7 +31,8 @@ var Analyzer = analysis.Analyzer{
 // that would have been defined via flags if this was ran as a vet tool. This is so the
 // analyzers can be ran outside of the context of a vet tool and config can be gathered
 // from elsewhere.
-func NewAnalyzerWithOptions(_minFunLen int, _validatePackages, _validateFunctions, _validateVariables, _validateConstants, _validateTypes bool) *analysis.Analyzer {
+func NewAnalyzerWithOptions(
+	_minFunLen int, _validatePackages, _validateFunctions, _validateVariables, _validateConstants, _validateTypes bool) *analysis.Analyzer {
 	minFunLen = _minFunLen
 	validatePackages = _validatePackages
 	validateFunctions = _validateFunctions
@@ -77,12 +78,18 @@ var (
 )
 
 func init() { //nolint:gochecknoinits
-	Analyzer.Flags.IntVar(&minFunLen, "minFunLen", 10, "the minimum function length that doculint will report on if said function has no related documentation")
-	Analyzer.Flags.BoolVar(&validatePackages, "validatePackages", true, "a boolean flag that denotes whether or not to validate package comments")
-	Analyzer.Flags.BoolVar(&validateFunctions, "validateFunctions", true, "a boolean flag that denotes whether or not to validate function comments")
-	Analyzer.Flags.BoolVar(&validateVariables, "validateVariables", true, "a boolean flag that denotes whether or not to validate variable comments")
-	Analyzer.Flags.BoolVar(&validateConstants, "validateConstants", true, "a boolean flag that denotes whether or not to validate constant comments")
-	Analyzer.Flags.BoolVar(&validateTypes, "validateTypes", true, "a boolean flag that denotes whether or not to validate type comments")
+	Analyzer.Flags.IntVar(
+		&minFunLen, "minFunLen", 10, "the minimum function length that doculint will report on if said function has no related documentation")
+	Analyzer.Flags.BoolVar(
+		&validatePackages, "validatePackages", true, "a boolean flag that denotes whether or not to validate package comments")
+	Analyzer.Flags.BoolVar(
+		&validateFunctions, "validateFunctions", true, "a boolean flag that denotes whether or not to validate function comments")
+	Analyzer.Flags.BoolVar(
+		&validateVariables, "validateVariables", true, "a boolean flag that denotes whether or not to validate variable comments")
+	Analyzer.Flags.BoolVar(
+		&validateConstants, "validateConstants", true, "a boolean flag that denotes whether or not to validate constant comments")
+	Analyzer.Flags.BoolVar(
+		&validateTypes, "validateTypes", true, "a boolean flag that denotes whether or not to validate type comments")
 
 	if minFunLen == 0 {
 		minFunLen = 10
@@ -142,11 +149,15 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 				validatePackageName(passWithNoLint, file.Package, passWithNoLint.Pkg.Name())
 
 				if file.Doc == nil {
-					passWithNoLint.Reportf(file.Package, "package \"%s\" has no comment associated with it in \"%s.go\"", passWithNoLint.Pkg.Name(), passWithNoLint.Pkg.Name())
+					passWithNoLint.Reportf(
+						file.Package,
+						"package \"%s\" has no comment associated with it in \"%s.go\"", passWithNoLint.Pkg.Name(), passWithNoLint.Pkg.Name())
 				} else {
 					expectedPrefix := fmt.Sprintf("Package %s", passWithNoLint.Pkg.Name())
 					if !strings.HasPrefix(strings.TrimSpace(file.Doc.Text()), expectedPrefix) {
-						passWithNoLint.Reportf(file.Package, "comment for package \"%s\" should begin with \"%s\"", passWithNoLint.Pkg.Name(), expectedPrefix)
+						passWithNoLint.Reportf(
+							file.Package,
+							"comment for package \"%s\" should begin with \"%s\"", passWithNoLint.Pkg.Name(), expectedPrefix)
 					}
 				}
 			}

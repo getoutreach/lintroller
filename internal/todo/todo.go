@@ -61,7 +61,8 @@ func todo(pass *analysis.Pass) (interface{}, error) {
 
 				if strings.HasPrefix(text, "TODO") {
 					if !reTodo.MatchString(text) {
-						passWithNoLint.Reportf(comment.Pos(), "TODO comment must match one of the required formats: TODO(<gh-user>)[<jira-ticket>]: <summary> or TODO[<jira-ticket>]: <summary>")
+						passWithNoLint.Reportf(comment.Pos(),
+							"TODO comment must match one of the required formats: TODO(<gh-user>)[<jira-ticket>]: <summary> or TODO[<jira-ticket>]: <summary>")
 					}
 				}
 			}

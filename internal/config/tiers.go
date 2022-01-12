@@ -80,9 +80,11 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 		if necessary {
 			if !current {
 				// If the necessary is true, but the current is false, then override it and log this action.
-				log.Warn(context.Background(), "boolean value required to be true to meet tier minimum stanards is set to false - overriding to true", log.F{
-					"field": fieldPath,
-				})
+				log.Warn(context.Background(),
+					"boolean value required to be true to meet tier minimum stanards is set to false - overriding to true",
+					log.F{
+						"field": fieldPath,
+					})
 				return true
 			}
 		}
@@ -106,7 +108,9 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 				}
 
 				if !found {
-					return fmt.Errorf("deviation detected from tier minimum defaults in lintroller.header.fields, fields must contain \"%s\"", desired.Header.Fields[i])
+					return fmt.Errorf(
+						"deviation detected from tier minimum defaults in lintroller.header.fields, fields must contain \"%s\"",
+						desired.Header.Fields[i])
 				}
 			}
 		}
@@ -133,11 +137,16 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 	// Ensure doculint linter minimum configuration against desired.
 	l.Doculint.Enabled = overrideBool(desired.Doculint.Enabled, l.Doculint.Enabled, "lintroller.doculint.enabled")
 	if l.Doculint.Enabled {
-		l.Doculint.ValidatePackages = overrideBool(desired.Doculint.ValidatePackages, l.Doculint.ValidatePackages, "lintroller.doculint.validatePackages")
-		l.Doculint.ValidateFunctions = overrideBool(desired.Doculint.ValidateFunctions, l.Doculint.ValidateFunctions, "lintroller.doculint.validateFunctions")
-		l.Doculint.ValidateVariables = overrideBool(desired.Doculint.ValidateVariables, l.Doculint.ValidateVariables, "lintroller.doculint.validateVariables")
-		l.Doculint.ValidateConstants = overrideBool(desired.Doculint.ValidateConstants, l.Doculint.ValidateConstants, "lintroller.doculint.validateConstants")
-		l.Doculint.ValidateTypes = overrideBool(desired.Doculint.ValidateTypes, l.Doculint.ValidateTypes, "lintroller.doculint.validateTypes")
+		l.Doculint.ValidatePackages = overrideBool(
+			desired.Doculint.ValidatePackages, l.Doculint.ValidatePackages, "lintroller.doculint.validatePackages")
+		l.Doculint.ValidateFunctions = overrideBool(
+			desired.Doculint.ValidateFunctions, l.Doculint.ValidateFunctions, "lintroller.doculint.validateFunctions")
+		l.Doculint.ValidateVariables = overrideBool(
+			desired.Doculint.ValidateVariables, l.Doculint.ValidateVariables, "lintroller.doculint.validateVariables")
+		l.Doculint.ValidateConstants = overrideBool(
+			desired.Doculint.ValidateConstants, l.Doculint.ValidateConstants, "lintroller.doculint.validateConstants")
+		l.Doculint.ValidateTypes = overrideBool(
+			desired.Doculint.ValidateTypes, l.Doculint.ValidateTypes, "lintroller.doculint.validateTypes")
 
 		if l.Doculint.ValidateFunctions {
 			if l.Doculint.MinFunLen == 0 {
@@ -147,7 +156,9 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 				})
 				l.Doculint.MinFunLen = desired.Doculint.MinFunLen
 			} else if l.Doculint.MinFunLen > desired.Doculint.MinFunLen || l.Doculint.MinFunLen < 0 {
-				return fmt.Errorf("deviation detected from tier minimum defaults in lintroller.doculint.minFunLen, minFunLen must be set within (0, %d]", desired.Doculint.MinFunLen)
+				return fmt.Errorf(
+					"deviation detected from tier minimum defaults in lintroller.doculint.minFunLen, minFunLen must be set within (0, %d]",
+					desired.Doculint.MinFunLen)
 			}
 		}
 	}
