@@ -3,6 +3,6 @@
 // Description: See package comment for this one file package.
 // Managed: true
 
-// Package linteroller should be ignored, this exists because this project was
+// Package lintroller should be ignored, this exists because this project was
 // bootstrapped as a library.
 package lintroller

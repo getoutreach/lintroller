@@ -29,19 +29,12 @@ var Analyzer = analysis.Analyzer{
 	Run:  todo,
 }
 
-// Regular expression variable block for the todo linter.
-var (
-	// reTodo is the regular expression that matches the required TODO format by this
-	// linter.
-	//
-	// For examples, see: https://regex101.com/r/vsbdEm/1
-	reTodo = regexp.MustCompile(`^TODO(\((?P<ghUser>[\w-]+)\))?\[(?P<jiraTicket>[A-Z]+-\d+)\]: .+$`)
-
-	// These subexpression indexes are placeholders just incase they're ever needed to
-	// be used for whatever reason in the future.
-	_ = reTodo.SubexpIndex("ghUser")
-	_ = reTodo.SubexpIndex("jiraTicket")
-)
+// reTodo is the regular expression that matches the required TODO format by this
+// linter. If ever necessary, the subexpression indexes ghUser and jiraTicket can
+// be used by calling reTodo.SubexpIndex(...).
+//
+// For examples, see: https://regex101.com/r/vsbdEm/1
+var reTodo = regexp.MustCompile(`^TODO(\((?P<ghUser>[\w-]+)\))?\[(?P<jiraTicket>[A-Z]+-\d+)\]: .+$`)
 
 // todo is the function that gets passed to the Analyzer which runs the actual
 // analysis for the todo linter on a set of files.

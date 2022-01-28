@@ -70,10 +70,10 @@ func PassWithNoLint(linter string, pass *analysis.Pass) *Pass {
 
 				// whySlashesIdx finds the next set of slashes if the nolint directive is in the form
 				// of:
-				//	nolint: linter1,linter2 // Why: reasoning
+				//	nolint: why,doculint // Why: reasoning
 				// If these slashes exist we use the index to trim them and all text following it off
 				// of the string, effectively producing:
-				//	nolint: linter1,linter2
+				//	nolint: why,doculint
 				if whySlashesIdx := strings.Index(text, "//"); whySlashesIdx != -1 {
 					text = strings.TrimSpace(text[:whySlashesIdx])
 				}

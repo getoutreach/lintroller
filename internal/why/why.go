@@ -16,7 +16,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// doc defines the name for the why linter.
+// name defines the name for the why linter.
 const name = "why"
 
 // doc defines the help text for the why linter.

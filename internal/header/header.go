@@ -72,13 +72,13 @@ var (
 	rawFields string
 )
 
-func init() { //nolint:gochecknoinits
+func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 	Analyzer.Flags.StringVar(&rawFields, "fields", "Description", "comma-separated list of fields required to be filled out in the header")
 }
 
 // header is the function that gets passed to the Analyzer which runs the actual
 // analysis for the header linter on a set of files.
-func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
+func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this up.
 	// Ignore test packages.
 	if common.IsTestPackage(pass) {
 		return nil, nil
