@@ -1,3 +1,7 @@
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: See package comment for this one file package.
+
 // Package nolint implements the ability for consumers of the linters exposed in lintroller
 // to explicitly ignore linter errors for the linters that report on specific lines.
 package nolint

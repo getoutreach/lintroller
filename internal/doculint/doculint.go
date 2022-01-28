@@ -1,4 +1,10 @@
-// Package doculint contains the necessary logic for the doculint linter.
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: See package comment for this one file package.
+
+// Package doculint contains the necessary logic for the doculint linter. The doculint
+// linter ensures proper documentation on various types, functions, variables, constants,
+// etc. in the form of comments.
 package doculint
 
 import (

@@ -1,4 +1,9 @@
-// Package todo contains the necessary logic for the todo linter.
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: See package comment for this one file package.
+
+// Package todo contains the necessary logic for the todo linter. This linter ensures that
+// all TODO comments contain a Jira ticket.
 package todo
 
 import (

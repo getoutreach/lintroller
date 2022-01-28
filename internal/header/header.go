@@ -1,3 +1,10 @@
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: See package comment for this one file package.
+
+// Package header defines the logic for the header linter. The header linter ensures
+// that certain key value pairs are defined at the top of the file in the form of
+// comments.
 package header
 
 import (

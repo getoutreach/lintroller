@@ -1,4 +1,9 @@
-// Package copyright contains the necessary logic for the copyright linter.
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: See package description for this one file package.
+
+// Package copyright contains the necessary logic for the copyright linter. The copyright
+// linter ensures that a copyright comments exists at the top of each .go file.
 package copyright
 
 import (

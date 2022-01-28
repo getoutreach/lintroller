@@ -1,4 +1,10 @@
-// Package why contains the necessary logic for the why linter.
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: See package comment for this one file package.
+
+// Package why contains the necessary logic for the why linter. The why linter ensures that
+// all nolint directives contain a followup // Why: ... statement after the nolint as well
+// as no naked nolint directives exist (//nolint as opposed to //nolint:specificLinter).
 package why
 
 import (
