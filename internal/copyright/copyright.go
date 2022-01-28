@@ -1,4 +1,9 @@
-// Package copyright contains the necessary logic for the copyright linter.
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: See package description for this one file package.
+
+// Package copyright contains the necessary logic for the copyright linter. The copyright
+// linter ensures that a copyright comments exists at the top of each .go file.
 package copyright
 
 import (
@@ -119,7 +124,7 @@ func (c *comparer) trackUniqueness(copyrightString string) {
 	}
 }
 
-func init() { //nolint:gochecknoinits
+func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 	// Setup flags.
 	//nolint:lll // Why: usage long
 	Analyzer.Flags.StringVar(&text, "text", "", "the copyright string required at the top of each .go file. if this and pattern are empty the linter is a no-op")
@@ -133,7 +138,7 @@ func init() { //nolint:gochecknoinits
 
 // copyright is the function that gets passed to the Analyzer which runs the actual
 // analysis for the copyright linter on a set of files.
-func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
+func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this function up anymore.
 	// Ignore test packages.
 	if common.IsTestPackage(pass) {
 		return nil, nil

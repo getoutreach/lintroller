@@ -1,3 +1,8 @@
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: This file defines the configuration for each separate linter
+// defined in lintroller as well as the conglomerate type.
+
 // Package config is used for defining the configuration necessary to run the
 // linters in an automated fashion.
 package config

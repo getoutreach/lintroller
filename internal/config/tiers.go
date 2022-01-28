@@ -1,3 +1,10 @@
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: This file contains tiering information that links back to certain sets
+// of configuration. This is really just to help ease the rollout of custom lint rules.
+// This set of tiers is subject to change, but efforts will be made to never "move the
+// goal posts" of already defined tiers.
+
 package config
 
 import (

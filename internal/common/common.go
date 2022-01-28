@@ -1,3 +1,7 @@
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: See package comment for this one file package.
+
 // Package common contains constants, functions, and types that are used in more than
 // one linter.
 package common

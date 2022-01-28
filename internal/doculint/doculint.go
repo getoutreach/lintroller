@@ -1,4 +1,10 @@
-// Package doculint contains the necessary logic for the doculint linter.
+// Copyright 2022 Outreach Corporation. All Rights Reserved.
+
+// Description: See package comment for this one file package.
+
+// Package doculint contains the necessary logic for the doculint linter. The doculint
+// linter ensures proper documentation on various types, functions, variables, constants,
+// etc. in the form of comments.
 package doculint
 
 import (
@@ -77,7 +83,7 @@ var (
 	validateTypes bool
 )
 
-func init() { //nolint:gochecknoinits
+func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 	Analyzer.Flags.IntVar(
 		&minFunLen, "minFunLen", 10, "the minimum function length that doculint will report on if said function has no related documentation")
 	Analyzer.Flags.BoolVar(
@@ -98,7 +104,7 @@ func init() { //nolint:gochecknoinits
 
 // doculint is the function that gets passed to the Analyzer which runs the actual
 // analysis for the doculint linter on a set of files.
-func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
+func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this function up anymore.
 	// Ignore test packages.
 	if common.IsTestPackage(pass) {
 		return nil, nil
@@ -223,7 +229,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen
 // Currently this function only looks for constants, type, and variable declarations
 // then further validates them.
 func validateGenDecl(reporter nolint.Reporter, expr *ast.GenDecl) {
-	switch expr.Tok { //nolint:exhaustive
+	switch expr.Tok { //nolint:exhaustive // Why: We don't need to take into account anything else.
 	case token.CONST:
 		if validateConstants {
 			// validateConstants flag was set to true, go ahead and validate constants.

@@ -56,8 +56,11 @@ Pulumi.*.yaml
 /cache-version.txt
 
 # DevSpace files
-/.devspace 
+/.devspace
 /deployments/lintroller.yaml
+
+# Documentation output
+/apidocs
 
 ###Block(extras)
 ###EndBlock(extras)
