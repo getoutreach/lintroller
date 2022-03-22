@@ -363,7 +363,7 @@ func validateGenDeclVariables(reporter nolint.Reporter, expr *ast.GenDecl) {
 			}
 
 			if doc == nil {
-				reporter.Reportf(vs.Pos(), "variable \"%s\" has no comment associated with it", name)
+				reporter.Reportf(vs.Pos(), "variable %q has no comment associated with it", name)
 				continue
 			}
 
