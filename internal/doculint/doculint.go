@@ -352,6 +352,9 @@ func validateGenDeclVariables(reporter nolint.Reporter, expr *ast.GenDecl) {
 			}
 
 			name := vs.Names[0].Name
+			if name == "_" {
+				continue // skip underscore variables.
+			}
 
 			doc := vs.Doc
 			if !expr.Lparen.IsValid() {
@@ -360,7 +363,7 @@ func validateGenDeclVariables(reporter nolint.Reporter, expr *ast.GenDecl) {
 			}
 
 			if doc == nil {
-				reporter.Reportf(vs.Pos(), "variable \"%s\" has no comment associated with it")
+				reporter.Reportf(vs.Pos(), "variable %q has no comment associated with it", name)
 				continue
 			}
 
