@@ -4,17 +4,40 @@ description: Lintroller houses all of the custom linters that Outreach uses for 
 oss: true
 slack: dev-tooling-notifications
 library: true
+circleAPIKey: ""
 lintroller: platinum
 releaseType: semver
 deployTo:
   environments: []
 arguments:
+  circleAPIKey: ""
+  commands: []
   dependencies:
     optional: []
     required: []
   description: Lintroller houses all of the custom linters that Outreach uses for Go projects.
+  grpcClients: []
+  opslevel:
+    confluenceSpaceKey: ""
+    datadogDashboards:
+      mainLink: ""
+    designDocumentLink: ""
+  oss: true
+  releaseOptions:
+    allowMajorVersions: null
+    allowPrereleases: false
   reportingTeam: fnd-dtss
-  type: []
+  type:
+    - library
 modules:
-  - url: https://github.com/getoutreach/stencil-base
+  - name: github.com/getoutreach/stencil-base
     version: ""
+opsLevel:
+  serviceTier: 0
+  lifecycle: ""
+  confluenceSpaceKey: ""
+  pagerDutyLink: ""
+  datadogDashboards:
+    mainLink: ""
+    custom: []
+  designDocumentLink: ""
