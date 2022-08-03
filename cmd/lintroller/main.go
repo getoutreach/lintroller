@@ -5,7 +5,7 @@ package main
 import (
 	"context"
 	"flag"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -44,7 +44,7 @@ func main() { //nolint:funlen // Why: It wouldn't make sense to split anymore of
 
 	if configPath != "" {
 		if quiet {
-			log.SetOutput(ioutil.Discard)
+			log.SetOutput(io.Discard)
 		}
 
 		cfg, err := config.FromFile(configPath)

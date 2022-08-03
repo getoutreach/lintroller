@@ -8,7 +8,7 @@ package common
 
 import (
 	"go/ast"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -70,7 +70,7 @@ func IsTestPackage(pass *analysis.Pass) bool {
 // Fset in *analysis.Pass.
 func LoadOtherFilesIntoFset(pass *analysis.Pass) error {
 	for _, fn := range pass.OtherFiles {
-		content, err := ioutil.ReadFile(fn)
+		content, err := os.ReadFile(fn)
 		if err != nil {
 			return errors.Wrapf(err, "return file content for \"%s\"", fn)
 		}

@@ -65,7 +65,7 @@ func (l *Lintroller) ValidateTier() error {
 		}
 	default:
 		log.Warn(context.Background(),
-			fmt.Sprintf("provided does not match any of the following: \"%s\", \"%s\", \"%s\", \"%s\" (sans-quotes)",
+			fmt.Sprintf("provided does not match any of the following: %q, %q, %q, %q (sans-quotes)",
 				TierBronze, TierSilver, TierGold, TierPlatinum),
 			log.F{
 				"tier": *l.Tier,
