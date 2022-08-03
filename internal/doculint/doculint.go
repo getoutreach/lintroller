@@ -266,7 +266,7 @@ func validateGenDeclConstants(reporter nolint.Reporter, expr *ast.GenDecl) {
 			if len(vs.Names) > 1 {
 				var names []string
 				for j := range vs.Names {
-					names = append(names, fmt.Sprintf("\"%s\"", vs.Names[j].Name))
+					names = append(names, fmt.Sprintf("%q", vs.Names[j].Name))
 				}
 
 				reporter.Reportf(vs.Pos(), "constants %s should be separated and each have a comment associated with them", strings.Join(names, ", "))
@@ -344,7 +344,7 @@ func validateGenDeclVariables(reporter nolint.Reporter, expr *ast.GenDecl) {
 			if len(vs.Names) > 1 {
 				var names []string
 				for j := range vs.Names {
-					names = append(names, fmt.Sprintf("\"%s\"", vs.Names[j].Name))
+					names = append(names, fmt.Sprintf("%q", vs.Names[j].Name))
 				}
 
 				reporter.Reportf(vs.Pos(), "variables %s should be separated and each have a comment associated with them", strings.Join(names, ", "))

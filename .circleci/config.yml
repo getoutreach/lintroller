@@ -1,132 +1,105 @@
+# Please re-run stencil after any changes to this file as invalid
+# syntax, such as anchors, will be fixed automatically.
 version: 2.1
 orbs:
-  shared: getoutreach/shared@1.45.1
+  shared: getoutreach/shared@2.2.0
 
-# DEPRECATED: Use the devbase orb instead:
-# https://github.com/getoutreach/devbase/tree/main/orbs/shared
-commands:
-  with_job_span:
-    parameters:
-      steps:
-        type: steps
-    steps:
-      - run:
-          name: DEPRECATION NOTICE
-          command: echo "with_job_span is deprecated and should be removed"
-      - steps: << parameters.steps >>
+# Extra contexts to expose to all jobs below
+contexts: &contexts
+  - aws-credentials
+  - ghaccesstoken
+  - docker-registry
+  - npm-credentials
+  - prismacloud-credentials
+  - opslevel-credentials
+  - vault-dev
+  - confluence
+  ###Block(extraContexts)
+
+  ###EndBlock(extraContexts)
 
 jobs:
+  {}
   ###Block(circleJobs)
+
   ###EndBlock(circleJobs)
 
-  test:
-    executor:
-      name: shared/testbed-docker
-    ###Block(circleTestOverride)
-    ###EndBlock(circleTestOverride)
-    docker:
-      - image: gcr.io/outreach-docker/bootstrap/ci:stable
-        auth:
-          username: _json_key
-          password: $GCLOUD_SERVICE_ACCOUNT
-    environment:
-      ###Block(testEnvVars)
-      ###EndBlock(testEnvVars)
-    steps:
-      - shared/setup_environment
-      - run:
-          name: Wait for Infrastructure to be Ready
-          command: ./scripts/shell-wrapper.sh ci/testing/wait-for-infra.sh
-      - shared/with_go_cache
-      - run:
-          name: Run unit tests
-          # Store the results of our tests in the $TEST_RESULTS directory
-          command: make test | tee ${TEST_RESULTS}/go-test.out
-      - run:
-          name: Upload Code Coverage
-          command: ./scripts/shell-wrapper.sh ci/testing/coveralls.sh test
-      - shared/save_go_cache # We save at the end because binaries are included with this
-      - shared/upload_test_results # Uploads to CircleCI
-
-  release-dryrun:
-    executor:
-      name: shared/testbed-docker
-      docker_tag: stable
-    steps:
-      - shared/setup_environment
-      - shared/with_node_cache:
-          save: true
-      - run:
-          name: Release (Dry-run)
-          command: ./scripts/shell-wrapper.sh ci/release/dryrun.sh
-  release:
-    executor:
-      name: shared/testbed-docker
-      docker_tag: stable
-    steps:
-      - shared/setup_environment
-      - shared/with_node_cache:
-          save: true
-      - run:
-          name: Release
-          command: ./scripts/shell-wrapper.sh ci/release/release.sh
-
-  trigger_documentation:
-    executor:
-      name: shared/testbed-docker
-      docker_tag: stable
-    steps:
-      - shared/setup_environment
-      - shared/with_go_cache
-      - run:
-          name: Trigger Documentation Update
-          command: ./scripts/shell-wrapper.sh ci/release/docs.sh
+  ### Start jobs inserted by other modules
+  ### End jobs inserted by other modules
 
 workflows:
   version: 2
   ###Block(circleWorkflows)
+
   ###EndBlock(circleWorkflows)
-  build_and_test:
+
+  ### Start workflows inserted by other modules
+  ### End workflows inserted by other modules
+
+  release:
     jobs:
       ###Block(circleWorkflowJobs)
+
       ###EndBlock(circleWorkflowJobs)
-      - release:
-          context:
-            - docker-registry
-            - npm-credentials
-            - ghaccesstoken
-            - package-cloud-credentials
+      ### Start jobs inserted by other modules
+      ### End jobs inserted by other modules
+      - shared/release: &release
+          dryrun: false
+          context: *contexts
+          ###Block(circleReleaseExtra)
+
+          ###EndBlock(circleReleaseExtra)
           requires:
-            - test
-          ###Block(circleReleaseRequires)
-          ###EndBlock(circleReleaseRequires)
+            ###Block(circleReleaseRequires)
+
+            ###EndBlock(circleReleaseRequires)
+            - shared/test
           filters:
             branches:
               only:
                 - master
                 - main
-      - release-dryrun:
-          context:
-            - docker-registry
-            - npm-credentials
-            - ghaccesstoken
-            - package-cloud-credentials
+      # Dryrun release for PRs
+      - shared/release:
+          <<: *release
+          dryrun: true
           filters:
             branches:
               ignore:
                 - master
                 - main
-      - test:
-          context:
-            - ghaccesstoken
-            - docker-registry
-            - npm-credentials
-      - trigger_documentation:
-          context:
-            - ghaccesstoken
-            - docker-registry
+      - shared/test:
+          context: *contexts
+          app_name: lintroller
+          ### Start parameters inserted by other modules
+          ### End parameters inserted by other modules
+          ###Block(circleTestExtra)
+
+          ###EndBlock(circleTestExtra)
+
+      - shared/publish_docs:
+          context: *contexts
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+      - shared/finalize-coverage:
+          context: *contexts
+          requires:
+            - shared/e2e
+            - shared/test
+      - shared/e2e:
+          context: *contexts
+          ###Block(circleE2EExtra)
+
+          ###EndBlock(circleE2EExtra)
+      - shared/docker:
+          context: *contexts
+          filters:
+            branches:
+              ignore:
+                - master
+                - main
+            tags:
+              only: /v\d+(\.\d+)*(-.*)*/
