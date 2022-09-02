@@ -35,7 +35,9 @@ const FuncInit = "init"
 //
 // Developer note: Periodically check whether or not this functionality is exposed in
 // a stdlib package by looking at the status of this accepted proposal:
+//
 //	https://github.com/golang/go/issues/28089
+//
 // Whenever it's added in a stdlib package, use that instead of this because it's
 // likely going to have been implemented in a manner that is a lot smarter than
 // this implementation.

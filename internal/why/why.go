@@ -37,6 +37,7 @@ var Analyzer = analysis.Analyzer{
 // ensures it contains a // Why: <reason> immediately proceeding the nolint directive.
 //
 // For examples, see https://regex101.com/r/I41sfC/1
+//
 //nolint:gocritic // Why: It is suggesting bad syntax by not escaping each of the forward slashes.
 var reNoLintWhy = regexp.MustCompile(`^nolint:\s?[\w\-,]+\s?\/\/\s?Why:\s?.+$`)
 
@@ -44,6 +45,7 @@ var reNoLintWhy = regexp.MustCompile(`^nolint:\s?[\w\-,]+\s?\/\/\s?Why:\s?.+$`)
 // to ensure no naked nolint directives exist.
 //
 // For examples, see https://regex101.com/r/XJY8md/1
+//
 //nolint:gocritic // Why: It is suggesting bad syntax by not escaping each of the forward slashes.
 var reNoLintNaked = regexp.MustCompile(`^nolint(\s*\/\/\s*Why:.*)*$`)
 
