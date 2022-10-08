@@ -217,7 +217,7 @@ var TierSilverConfiguration = Lintroller{
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		Pattern: `^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$`,
+		Pattern: `^Copyright 20.*$`,
 	},
 	Doculint: Doculint{
 		Enabled:           true,
@@ -246,7 +246,7 @@ var TierGoldConfiguration = Lintroller{
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		Pattern: `^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$`,
+		Pattern: `^Copyright 20.*$`,
 	},
 	Doculint: Doculint{
 		Enabled:           true,
@@ -275,7 +275,7 @@ var TierPlatinumConfiguration = Lintroller{
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		Pattern: `^Copyright 20[2-9][0-9] Outreach Corporation\. All Rights Reserved\.$`,
+		Pattern: `^Copyright 20.*$`,
 	},
 	Doculint: Doculint{
 		Enabled:           true,

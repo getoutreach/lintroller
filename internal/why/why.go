@@ -33,21 +33,18 @@ var Analyzer = analysis.Analyzer{
 	Run:  why,
 }
 
+// whyPattern is a regular expression fragment that matches just a "Why"
+// comment.
+const whyPattern = `//\s?Why:.+`
+
 // reNoLintWhy is the regular expression that every nolint comment must match, which
 // ensures it contains a // Why: <reason> immediately proceeding the nolint directive.
-//
-// For examples, see https://regex101.com/r/I41sfC/1
-//
-//nolint:gocritic // Why: It is suggesting bad syntax by not escaping each of the forward slashes.
-var reNoLintWhy = regexp.MustCompile(`^nolint:\s?[\w\-,]+\s?\/\/\s?Why:\s?.+$`)
+var reNoLintWhy = regexp.MustCompile(`^nolint(?::\s?[\w\-,]+)?\s+` + whyPattern + `$`)
 
 // reNoLintNaked is the regular expression that every nolint comment is checked against
-// to ensure no naked nolint directives exist.
-//
-// For examples, see https://regex101.com/r/XJY8md/1
-//
-//nolint:gocritic // Why: It is suggesting bad syntax by not escaping each of the forward slashes.
-var reNoLintNaked = regexp.MustCompile(`^nolint(\s*\/\/\s*Why:.*)*$`)
+// to ensure no naked nolint directives exist. This matches `nolint` comments
+// without a directive and with an optional Why comment.
+var reNoLintNaked = regexp.MustCompile(`^nolint\s*(?:` + whyPattern + `)?$`)
 
 // why is the function that gets passed to the Analyzer which runs the actual analysis
 // for the why linter on a set of files.
@@ -73,10 +70,6 @@ func why(pass *analysis.Pass) (interface{}, error) {
 				if strings.HasPrefix(text, "nolint") {
 					if reNoLintNaked.MatchString(text) {
 						passWithNoLint.Reportf(comment.Pos(), "nolint directive must contain the specific linters it is nolinting against")
-
-						// Continue, if it doesn't contain the why it'll catch it after the error is resolved here.
-						// We'd have to modify the regex to be more confusing than it already is to account for it.
-						continue
 					}
 
 					if !reNoLintWhy.MatchString(text) {

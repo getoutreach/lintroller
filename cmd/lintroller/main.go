@@ -22,23 +22,23 @@ import (
 	"golang.org/x/tools/go/analysis/unitchecker"
 )
 
-func main() { //nolint:funlen // Why: It wouldn't make sense to split anymore of this into separate functions.
+func main() {
+	const configHelp = "the path to the config file for lintroller. " +
+		"If this is not set it will be assumed lintroller is running as a vet tool."
+	const quietHelp = "if set, emit log statements outside of linting results. " +
+		"Only applies when config is given."
 	// This needs to be set so that when the analyzers parse their flags they won't error due to
 	// an unknown flag being passed.
-	//nolint:lll // Why: Mostly flag info
-	_ = flag.String("config", "", "the path to the config file for lintroller. if this is not set it will be assumed lintroller is running as a vet tool")
-	//nolint:lll // Why: Mostly flag info
-	_ = flag.Bool("quiet", true, "whether or not the linter will emit log statements outside of linting results. only applies when config is passed (when lintroller is not running in vet mode)")
+	_ = flag.String("config", "", configHelp)
+	_ = flag.Bool("quiet", true, quietHelp)
 
-	mainFs := flag.NewFlagSet("main", flag.ContinueOnError)
+	mainFs := flag.NewFlagSet("lintroller", flag.ContinueOnError)
 
 	var configPath string
 	var quiet bool
 
-	//nolint:lll // Why: Mostly flag info
-	mainFs.StringVar(&configPath, "config", "", "the path to the config file for lintroller. if this is not set it will be assumed lintroller is running as a vet tool")
-	//nolint:lll // Why: Mostly flag info
-	mainFs.BoolVar(&quiet, "quiet", true, "whether or not the linter will emit log statements outside of linting results. only applies when config is passed (when lintroller is not running in vet mode)")
+	mainFs.StringVar(&configPath, "config", "", configHelp)
+	mainFs.BoolVar(&quiet, "quiet", true, quietHelp)
 
 	_ = mainFs.Parse(os.Args[1:]) //nolint:errcheck // Why: There is no need to check this error.
 
