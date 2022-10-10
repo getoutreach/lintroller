@@ -7,6 +7,7 @@
 package todo
 
 import (
+	"go/ast"
 	"regexp"
 	"strings"
 
@@ -19,8 +20,8 @@ import (
 const name = "todo"
 
 // doc defines the help text for the todo linter.
-const doc = `Ensures that each TODO comment defined in the codebase conforms to one of the
-following formats: TODO(<gh-user>)[<jira-ticket>]: <summary> or TODO[<jira-ticket>]: <summary>`
+const doc = "Ensures that each TODO comment defined in the codebase conforms to the " +
+	"format `TODO(<gh-user>)[<jira-ticket>]: <summary>`, with one of `(gh-user)` or `[jira-ticket]` being required."
 
 // Analyzer exports the todo analyzer (linter).
 var Analyzer = analysis.Analyzer{
@@ -30,11 +31,9 @@ var Analyzer = analysis.Analyzer{
 }
 
 // reTodo is the regular expression that matches the required TODO format by this
-// linter. If ever necessary, the subexpression indexes ghUser and jiraTicket can
-// be used by calling reTodo.SubexpIndex(...).
-//
-// For examples, see: https://regex101.com/r/vsbdEm/1
-var reTodo = regexp.MustCompile(`^TODO(\((?P<ghUser>[\w-]+)\))?\[(?P<jiraTicket>[A-Z]+-\d+)\]: .+$`)
+// linter. This is a TODO followed by one or more of a username in parens and a
+// Jira ticket ID in brackets.
+var reTodo = regexp.MustCompile(`^TODO(\([\w-]+\))?(\[[a-zA-Z\d-]+\])?: .+$`)
 
 // todo is the function that gets passed to the Analyzer which runs the actual
 // analysis for the todo linter on a set of files.
@@ -55,17 +54,28 @@ func todo(pass *analysis.Pass) (interface{}, error) {
 
 		for _, commentGroup := range file.Comments {
 			for _, comment := range commentGroup.List {
-				text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
-
-				if strings.HasPrefix(text, "TODO") {
-					if !reTodo.MatchString(text) {
-						passWithNoLint.Reportf(comment.Pos(),
-							"TODO comment must match one of the required formats: TODO(<gh-user>)[<jira-ticket>]: <summary> or TODO[<jira-ticket>]: <summary>")
-					}
+				if !matchTodo(comment) {
+					passWithNoLint.Reportf(comment.Pos(),
+						"TODO comment must start the line, have a github username and / or a Jira ticket, and be followed by a colon and space: "+
+							"`TODO(<gh-user>)[<jira-ticket>]: `")
 				}
 			}
 		}
 	}
 
 	return nil, nil
+}
+
+// matchTodo returns true if the given comment does not have a TODO, or if it
+// matches the required TODO format.
+func matchTodo(comment *ast.Comment) bool {
+	text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
+
+	if strings.HasPrefix(text, "TODO") {
+		matches := reTodo.FindStringSubmatch(text)
+		// Verify that we matched & saw at least one of the username or jira ticket.
+		return len(matches) >= 3 && (matches[1] != "" || matches[2] != "")
+	}
+
+	return true
 }
