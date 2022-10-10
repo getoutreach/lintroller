@@ -1,16 +1,4 @@
 name: lintroller
-reportingTeam: fnd-dt
-description: Lintroller houses all of the custom linters that Outreach uses for Go projects.
-oss: true
-slack: dev-tooling-notifications
-library: true
-circleAPIKey: ""
-lintroller: platinum
-tracing: honeycomb
-metrics: datadog
-releaseType: semver
-deployTo:
-  environments: []
 arguments:
   circleAPIKey: ""
   commands: []
@@ -19,6 +7,7 @@ arguments:
     optional: []
     required: []
   description: Lintroller houses all of the custom linters that Outreach uses for Go projects.
+  go-protoc-imports: []
   grpcClients: []
   kubernetes:
     groups: []
@@ -31,31 +20,55 @@ arguments:
     designDocumentLink: ""
   oss: true
   releaseOptions:
-    allowMajorVersions: null
+    allowMajorVersions: false
     enablePrereleases: false
+    prereleasesBranch: ""
   reportingTeam: fnd-dt
   resources: {}
   service: false
-  tracing: honeycomb
+  slack: dev-tooling-notifications
+  terraform:
+    datadog:
+      grpc:
+        evaluationWindow: ""
+        latency:
+          percentiles:
+            highTraffic: 0
+            lowTraffic: 0
+          thresholds:
+            highTraffic: 0
+            lowTraffic: 0
+        lowTrafficCountThreshold: 0
+        qos:
+          thresholds:
+            highTraffic: 0
+            lowTraffic: 0
+        tags: []
+      http:
+        evaluationWindow: ""
+        percentiles:
+          highTraffic: 0
+          lowTraffic: 0
+        thresholds:
+          highTraffic: 0
+          lowCount: 0
+          lowTraffic: 0
+      pods:
+        thresholds:
+          availableLowCount: 0
+  tracing: opentelemetry
   tutorial: false
+  validation: false
   vaultSecrets:
     - deploy/honeycomb_new/%(environment)s/honeycomb
     - deploy/launchdarkly/%(environment)s/launchdarkly
     - deploy/mint/%(environment)s/validation/mint-validator-payload
     - deploy/flagship-shared-secret/%(environment)s/authn-flagship-payload
 modules:
+  - name: github.com/getoutreach/stencil-discovery
   - name: github.com/getoutreach/stencil-base
   - name: github.com/getoutreach/stencil-golang
-  - name: github.com/getoutreach/stencil-opslevel
   - name: github.com/getoutreach/stencil-outreach
   - name: github.com/getoutreach/stencil-circleci
   - name: github.com/getoutreach/stencil-actions
-opsLevel:
-  serviceTier: 0
-  lifecycle: ""
-  confluenceSpaceKey: ""
-  pagerDutyLink: ""
-  datadogDashboards:
-    mainLink: ""
-    custom: []
-  designDocumentLink: ""
+migrated: true
