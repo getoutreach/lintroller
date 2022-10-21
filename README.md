@@ -26,6 +26,7 @@ This makes lintroller compatible with `go vet`, the recommended way to run lintr
 
 - `copyright` - Checks that files start with a header that matches a regular expression.
 - `doculint` - Checks that packages and various top-level items in the package have well-formed comments.
+  - See [the golang guide for writing comments](https://go.dev/doc/comment).
 - `header` - Checks that source code files have structured headers.
 - `todo` - Checks that TODO comments:
   - Start the comment line.

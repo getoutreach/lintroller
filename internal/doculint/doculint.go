@@ -387,8 +387,9 @@ func validateFuncDecl(reporter nolint.Reporter, expr *ast.FuncDecl) {
 		return
 	}
 
-	if !strings.HasPrefix(strings.TrimSpace(expr.Doc.Text()), expr.Name.Name) {
-		reporter.Reportf(expr.Pos(), "comment for function \"%s\" should begin with \"%s\"", expr.Name.Name, expr.Name.Name)
+	// Enforce a space after the function name.
+	if !strings.HasPrefix(strings.TrimSpace(expr.Doc.Text()), expr.Name.Name+" ") {
+		reporter.Reportf(expr.Pos(), "comment for function \"%s\" should be a sentence that starts with \"%s \"", expr.Name.Name, expr.Name.Name)
 	}
 }
 
