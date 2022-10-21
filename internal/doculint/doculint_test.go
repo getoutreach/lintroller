@@ -42,19 +42,19 @@ func TestValidateFunDecl(t *testing.T) {
 			name:           "Produces an error when the doc doesn't start with the function name",
 			funcName:       "foo",
 			funcDoc:        "This function is foo.",
-			expectedFormat: "comment for function \"%s\" should be a sentence that starts with \"%s\"",
+			expectedFormat: "comment for function \"%s\" should be a sentence that starts with \"%s \"",
 		},
 		{
 			name:           "Produces an error when the doc is malformed",
 			funcName:       "foo",
 			funcDoc:        "foo: Does a foo thing.",
-			expectedFormat: "comment for function \"%s\" should be a sentence that starts with \"%s\"",
+			expectedFormat: "comment for function \"%s\" should be a sentence that starts with \"%s \"",
 		},
 		{
 			name:           "Produces an error when the doc has a bad function name",
 			funcName:       "foo",
 			funcDoc:        "fooBar: Does a foobar thing.",
-			expectedFormat: "comment for function \"%s\" should be a sentence that starts with \"%s\"",
+			expectedFormat: "comment for function \"%s\" should be a sentence that starts with \"%s \"",
 		},
 		{
 			name:           "Allows good comments",
