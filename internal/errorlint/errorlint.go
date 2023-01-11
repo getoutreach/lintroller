@@ -96,7 +96,6 @@ func lintMessageStrings(expr ast.Expr) (string, bool) {
 	if msgString == "" {
 		return "", true
 	}
-
 	isClean := isStringFormatted(msgString)
 	return getPkgName(call.Fun), isClean
 }
@@ -121,6 +120,7 @@ func getPkgName(expr ast.Expr) string {
 			return pkg
 		}
 	}
+
 	return ""
 }
 
