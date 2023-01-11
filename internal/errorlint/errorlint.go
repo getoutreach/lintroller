@@ -121,7 +121,6 @@ func getPkgName(expr ast.Expr) string {
 			return pkg
 		}
 	}
-
 	return ""
 }
 
