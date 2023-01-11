@@ -67,11 +67,10 @@ func lintMessageStrings(expr ast.Expr) (string, bool) {
 		return "", true
 	}
 
-	if !isPkgDot(call.Fun, "errors", "New") && !isPkgDot(call.Fun, "fmt", "Errorf") &&
-		!isPkgDot(call.Fun, "errors", "Wrap") && !isPkgDot(call.Fun, "errors", "Wrapf") &&
+	if !isPkgDot(call.Fun, "errors", "New") && !isPkgDot(call.Fun, "errors", "Wrap") &&
+		!isPkgDot(call.Fun, "errors", "Wrapf") && !isPkgDot(call.Fun, "log", "Warn") &&
 		!isPkgDot(call.Fun, "log", "Info") && !isPkgDot(call.Fun, "log", "Error") &&
-		!isPkgDot(call.Fun, "log", "Warn") && !isPkgDot(call.Fun, "trace", "StartCall") &&
-		!isPkgDot(call.Fun, "trace", "StartSpan") && !isPkgDot(call.Fun, "fmt", "Sprintf") {
+		!isPkgDot(call.Fun, "trace", "StartSpan") && !isPkgDot(call.Fun, "trace", "StartCall") {
 		return "", true
 	}
 
@@ -80,7 +79,7 @@ func lintMessageStrings(expr ast.Expr) (string, bool) {
 	}
 
 	msgIndex := 1
-	if isPkgDot(call.Fun, "errors", "New") || isPkgDot(call.Fun, "fmt", "Errorf") {
+	if isPkgDot(call.Fun, "errors", "New") {
 		msgIndex = 0
 	}
 
