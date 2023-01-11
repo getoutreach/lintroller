@@ -115,7 +115,7 @@ func isPkgDot(expr ast.Expr, pkg, name string) bool {
 // getPkgName returns package name
 func getPkgName(expr ast.Expr) string {
 	sel, ok := expr.(*ast.SelectorExpr)
-	for _, pkg := range []string{"errors", "fmt", "log", "trace"} {
+	for _, pkg := range []string{"errors", "log", "trace"} {
 		if ok && isIdent(sel.X, pkg) {
 			return pkg
 		}
