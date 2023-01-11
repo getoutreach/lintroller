@@ -52,7 +52,7 @@ func errorlint(pass *analysis.Pass) (interface{}, error) {
 		for expr := range pass.TypesInfo.Types {
 			pkgName, isCleanString := lintMessageStrings(expr)
 			if !isCleanString {
-				passWithNoLint.Reportf(expr.Pos(), "%s message should be lowercase", pkgName)
+				passWithNoLint.Reportf(expr.Pos(), "%s message should be lowercase and last char should not be one of \". : ! \\n\"", pkgName)
 			}
 		}
 	}
@@ -126,18 +126,12 @@ func getPkgName(expr ast.Expr) string {
 
 // isStringFormatted examines error/trace/log strings for incorrect ending and capitalization
 func isStringFormatted(msg string) bool {
-	first, firstN := utf8.DecodeRuneInString(msg)
 	last, _ := utf8.DecodeLastRuneInString(msg)
 	if last == '.' || last == ':' || last == '!' || last == '\n' {
 		return false
 	}
-
-	if unicode.IsUpper(first) {
-		if len(msg) <= firstN {
-			return false
-		}
-
-		if second, _ := utf8.DecodeRuneInString(msg[firstN:]); !unicode.IsUpper(second) {
+	for _, ch := range msg {
+		if unicode.IsUpper(ch) {
 			return false
 		}
 	}
