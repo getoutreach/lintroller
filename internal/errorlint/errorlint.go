@@ -48,8 +48,9 @@ func errorlint(pass *analysis.Pass) (interface{}, error) {
 		if common.IsGenerated(file) || common.IsTestFile(passWithNoLint.Pass, file) {
 			continue
 		}
+
 		for expr := range pass.TypesInfo.Types {
-			pkgName, isCleanString := lintMessagerStrings(expr)
+			pkgName, isCleanString := lintMessageStrings(expr)
 			if !isCleanString {
 				passWithNoLint.Reportf(expr.Pos(), "%s message should be lowercase", pkgName)
 			}
@@ -59,39 +60,45 @@ func errorlint(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
-// lintMessagerStrings examines error/trace/log strings for capitalization and valid ending
-func lintMessagerStrings(f ast.Expr) (string, bool) {
-	ce, ok := f.(*ast.CallExpr)
+// lintMessageStrings examines error/trace/log strings for capitalization and valid ending
+func lintMessageStrings(expr ast.Expr) (string, bool) {
+	call, ok := expr.(*ast.CallExpr)
 	if !ok {
 		return "", true
 	}
-	if !isPkgDot(ce.Fun, "errors", "New") && !isPkgDot(ce.Fun, "fmt", "Errorf") &&
-		!isPkgDot(ce.Fun, "errors", "Wrap") && !isPkgDot(ce.Fun, "errors", "Wrapf") &&
-		!isPkgDot(ce.Fun, "log", "Info") && !isPkgDot(ce.Fun, "log", "Error") &&
-		!isPkgDot(ce.Fun, "log", "Warn") && !isPkgDot(ce.Fun, "trace", "StartCall") &&
-		!isPkgDot(ce.Fun, "trace", "StartSpan") {
+
+	if !isPkgDot(call.Fun, "errors", "New") && !isPkgDot(call.Fun, "fmt", "Errorf") &&
+		!isPkgDot(call.Fun, "errors", "Wrap") && !isPkgDot(call.Fun, "errors", "Wrapf") &&
+		!isPkgDot(call.Fun, "log", "Info") && !isPkgDot(call.Fun, "log", "Error") &&
+		!isPkgDot(call.Fun, "log", "Warn") && !isPkgDot(call.Fun, "trace", "StartCall") &&
+		!isPkgDot(call.Fun, "trace", "StartSpan") && !isPkgDot(call.Fun, "fmt", "Sprintf") {
 		return "", true
 	}
-	if len(ce.Args) < 1 {
+
+	if len(call.Args) < 1 {
 		return "", true
 	}
+
 	msgIndex := 1
-	if isPkgDot(ce.Fun, "errors", "New") || isPkgDot(ce.Fun, "fmt", "Errorf") {
+	if isPkgDot(call.Fun, "errors", "New") || isPkgDot(call.Fun, "fmt", "Errorf") {
 		msgIndex = 0
 	}
-	str, ok := ce.Args[msgIndex].(*ast.BasicLit)
-	if !ok || str.Kind != token.STRING {
+
+	msg, ok := call.Args[msgIndex].(*ast.BasicLit)
+	if !ok || msg.Kind != token.STRING {
 		return "", true
 	}
-	s, err := strconv.Unquote(str.Value)
+
+	msgString, err := strconv.Unquote(msg.Value)
 	if err != nil {
 		return "", false
 	}
-	if s == "" {
+
+	if msgString == "" {
 		return "", true
 	}
-	clean := isStringFormatted(s)
-	return getPkgName(ce.Fun), clean
+	isClean := isStringFormatted(msgString)
+	return getPkgName(call.Fun), isClean
 }
 
 // isIdent checks if ident string is equal to ast.Ident name
@@ -114,23 +121,27 @@ func getPkgName(expr ast.Expr) string {
 			return pkg
 		}
 	}
+
 	return ""
 }
 
 // isStringFormatted examines error/trace/log strings for incorrect ending and capitalization
-func isStringFormatted(s string) bool {
-	first, firstN := utf8.DecodeRuneInString(s)
-	last, _ := utf8.DecodeLastRuneInString(s)
+func isStringFormatted(msg string) bool {
+	first, firstN := utf8.DecodeRuneInString(msg)
+	last, _ := utf8.DecodeLastRuneInString(msg)
 	if last == '.' || last == ':' || last == '!' || last == '\n' {
 		return false
 	}
+
 	if unicode.IsUpper(first) {
-		if len(s) <= firstN {
+		if len(msg) <= firstN {
 			return false
 		}
-		if second, _ := utf8.DecodeRuneInString(s[firstN:]); !unicode.IsUpper(second) {
+
+		if second, _ := utf8.DecodeRuneInString(msg[firstN:]); !unicode.IsUpper(second) {
 			return false
 		}
 	}
+
 	return true
 }
