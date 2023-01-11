@@ -59,6 +59,7 @@ type Lintroller struct {
 	Doculint  Doculint  `yaml:"doculint"`
 	Todo      Todo      `yaml:"todo"`
 	Why       Why       `yaml:"why"`
+	Errorlint Errorlint `yaml:"errorlint"`
 }
 
 // MarshalLog implements the log.Marshaler interface.
@@ -68,6 +69,7 @@ func (lr *Lintroller) MarshalLog(addField func(key string, value interface{})) {
 	addField("doculint", lr.Doculint)
 	addField("todo", lr.Todo)
 	addField("why", lr.Why)
+	addField("errorlint", lr.Errorlint)
 }
 
 // Header is the configuration type that matches the flags exposed by the header
@@ -172,5 +174,16 @@ type Why struct {
 
 // MarshalLog implements the log.Marshaler interface.
 func (w *Why) MarshalLog(addField func(key string, value interface{})) {
+	addField("enabled", w.Enabled)
+}
+
+// Errorlint is the configuration type that matches the flags exposed by the errorlint linter.
+type Errorlint struct {
+	// Enabled denotes whether or not this linter is enabled. Defaults to true.
+	Enabled bool `yaml:"enabled"`
+}
+
+// MarshalLog implements the log.Marshaler interface.
+func (w *Errorlint) MarshalLog(addField func(key string, value interface{})) {
 	addField("enabled", w.Enabled)
 }
