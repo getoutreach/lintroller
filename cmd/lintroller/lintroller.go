@@ -14,6 +14,7 @@ import (
 	"github.com/getoutreach/lintroller/internal/config"
 	"github.com/getoutreach/lintroller/internal/copyright"
 	"github.com/getoutreach/lintroller/internal/doculint"
+	"github.com/getoutreach/lintroller/internal/errorlint"
 	"github.com/getoutreach/lintroller/internal/header"
 	"github.com/getoutreach/lintroller/internal/todo"
 	"github.com/getoutreach/lintroller/internal/why"
@@ -67,6 +68,7 @@ func main() {
 				cfg.Doculint.ValidateConstants, cfg.Doculint.ValidateTypes)},
 			{cfg.Todo.Enabled, &todo.Analyzer},
 			{cfg.Why.Enabled, &why.Analyzer},
+			{cfg.Errorlint.Enabled, &errorlint.Analyzer},
 		}
 
 		var analyzers []*analysis.Analyzer
@@ -88,5 +90,6 @@ func main() {
 		&copyright.Analyzer,
 		&todo.Analyzer,
 		&why.Analyzer,
+		&errorlint.Analyzer,
 	)
 }

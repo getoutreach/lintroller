@@ -49,7 +49,7 @@ func (l *Lintroller) ValidateTier() error {
 	switch strings.ToLower(*l.Tier) {
 	case TierBronze:
 		if err := l.EnsureMinimums(&TierBronzeConfiguration); err != nil {
-			return errors.Wrap(err, "ensure given configuration meets minimum requirments for bronze tier")
+			return errors.Wrap(err, "Ensure given configuration meets minimum requirments for bronze tier")
 		}
 	case TierSilver:
 		if err := l.EnsureMinimums(&TierSilverConfiguration); err != nil {
@@ -205,6 +205,9 @@ var TierBronzeConfiguration = Lintroller{
 	Why: Why{
 		Enabled: false,
 	},
+	Errorlint: Errorlint{
+		Enabled: false,
+	},
 }
 
 // TierSilverConfiguration is the Lintroller configuration minumums that correspond
@@ -232,6 +235,9 @@ var TierSilverConfiguration = Lintroller{
 		Enabled: true,
 	},
 	Why: Why{
+		Enabled: true,
+	},
+	Errorlint: Errorlint{
 		Enabled: true,
 	},
 }
@@ -263,6 +269,9 @@ var TierGoldConfiguration = Lintroller{
 	Why: Why{
 		Enabled: true,
 	},
+	Errorlint: Errorlint{
+		Enabled: true,
+	},
 }
 
 // TierPlatinumConfiguration is the Lintroller configuration minumums that correspond
@@ -290,6 +299,9 @@ var TierPlatinumConfiguration = Lintroller{
 		Enabled: true,
 	},
 	Why: Why{
+		Enabled: true,
+	},
+	Errorlint: Errorlint{
 		Enabled: true,
 	},
 }
