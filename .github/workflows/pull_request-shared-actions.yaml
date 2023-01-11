@@ -1,7 +1,5 @@
 name: Pull Request Shared Actions
-on:
-  pull_request:
-    types: [opened, synchronize, reopened, edited] # Add edited to the default list for title changes event
+on: pull_request
 
 jobs:
   conventional_commit:
