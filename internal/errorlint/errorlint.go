@@ -68,7 +68,7 @@ func lintMessagerStrings(f ast.Expr) (string, bool) {
 	if !isPkgDot(ce.Fun, "errors", "New") && !isPkgDot(ce.Fun, "fmt", "Errorf") &&
 		!isPkgDot(ce.Fun, "errors", "Wrap") && !isPkgDot(ce.Fun, "errors", "Wrapf") &&
 		!isPkgDot(ce.Fun, "log", "Info") && !isPkgDot(ce.Fun, "log", "Error") &&
-		!isPkgDot(ce.Fun, "log", "warn") && !isPkgDot(ce.Fun, "trace", "StartCall") &&
+		!isPkgDot(ce.Fun, "log", "Warn") && !isPkgDot(ce.Fun, "trace", "StartCall") &&
 		!isPkgDot(ce.Fun, "trace", "StartSpan") {
 		return "", true
 	}
