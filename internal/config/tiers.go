@@ -49,7 +49,7 @@ func (l *Lintroller) ValidateTier() error {
 	switch strings.ToLower(*l.Tier) {
 	case TierBronze:
 		if err := l.EnsureMinimums(&TierBronzeConfiguration); err != nil {
-			return errors.Wrap(err, "Ensure given configuration meets minimum requirments for bronze tier")
+			return errors.Wrap(err, "ensure given configuration meets minimum requirments for bronze tier")
 		}
 	case TierSilver:
 		if err := l.EnsureMinimums(&TierSilverConfiguration); err != nil {
