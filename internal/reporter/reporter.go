@@ -2,22 +2,27 @@
 
 // Description: See package comment for this one file package.
 
-// Package nolint implements the ability for consumers of the linters exposed in lintroller
-// to explicitly ignore linter errors for the linters that report on specific lines.
-package nolint
+// Package reporter implements an interface that captures the analysis.Pass.Reportf
+// function within it so that it can be wrapped. This provides the ability for consumers
+// of the linters exposed in lintroller to explicitly ignore linter errors for the
+// linters that report on specific lines by way of nolint directives as well as provide
+// the framework within lintroller itself to report lint reports as warnings instead of
+// errors for specific linters.
+package reporter
 
 import (
+	"fmt"
 	"go/token"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
 )
 
-// directive is the string that is looked for to gather information what to skip when using
+// noLintDirective is the string that is looked for to gather information what to skip when using
 // Pass.
-const directive = "nolint:"
+const noLintDirective = "nolint:"
 
-// Reporter is a convienance interface that allows Pass to be provided to helper functions
+// Reporter is a convenience interface that allows Pass to be provided to helper functions
 // in linters who need to be able to use Reportf.
 type Reporter interface {
 	Reportf(pos token.Pos, format string, args ...interface{})
@@ -36,7 +41,7 @@ type noLint struct {
 	line     int
 }
 
-// Matches is a convienance function that matches the receiver with a token.Position.
+// Matches is a convenience function that matches the receiver with a token.Position.
 //
 // The reason we match on both noLint.line == position.Line and the line after noLint.line
 // (noLint.line+1) is to allow users to specify their nolint directives on the exact same
@@ -45,22 +50,30 @@ func (n *noLint) Matches(position token.Position) bool {
 	return n.filename == position.Filename && (n.line == position.Line || n.line+1 == position.Line)
 }
 
-// Pass is a wrapper around *analysis.Pass that accounts for nolint directives. Please never
-// initialize this type directly, only through PassWithNoLint. If you initialize this type
+// Pass is a wrapper around *analysis.Pass that accounts for nolint directives as well as any
+// other functionality that it is configured with during initialization with the factory function.
+// Please never initialize this type directly, only through NewPass. If you initialize this type
 // directly, it will essentially be a no-op wrapper around *analysis.Pass.
 type Pass struct {
 	noLints []noLint
 	linter  string
 
 	*analysis.Pass
+
+	// Functional option supplied configuration
+	warn bool
 }
 
-// PassWithNoLint returns a wrapped version of *analysis.Pass as Pass with nolint directives
-// identified for the provided linter name.
-func PassWithNoLint(linter string, pass *analysis.Pass) *Pass {
+// NewPass returns a wrapped version of *analysis.Pass to do reporting that takes account for nolint
+// directives as well as any functionality provided by the functional options passed to this.
+func NewPass(linter string, pass *analysis.Pass, opts ...PassOption) *Pass {
 	p := Pass{
 		Pass:   pass,
 		linter: linter,
+	}
+
+	for i := range opts {
+		opts[i](&p)
 	}
 
 	for _, file := range p.Files {
@@ -78,8 +91,8 @@ func PassWithNoLint(linter string, pass *analysis.Pass) *Pass {
 					text = strings.TrimSpace(text[:whySlashesIdx])
 				}
 
-				if strings.HasPrefix(text, directive) {
-					linters := strings.Split(strings.TrimSpace(strings.TrimPrefix(text, directive)), ",")
+				if strings.HasPrefix(text, noLintDirective) {
+					linters := strings.Split(strings.TrimSpace(strings.TrimPrefix(text, noLintDirective)), ",")
 
 					for i := range linters {
 						if linters[i] == linter {
@@ -99,8 +112,8 @@ func PassWithNoLint(linter string, pass *analysis.Pass) *Pass {
 	return &p
 }
 
-// Reportf is a wrapper around *analysis.Pass.Reportf that respects nolint directives stored
-// in *Pass.noLint, which are gathered in PassWithNoLint.
+// Reportf is a wrapper around *analysis.Pass.Reportf that respects nolint directives and any other
+// functionality provided by the functional options when Pass was formed with its factory function.
 func (p *Pass) Reportf(pos token.Pos, format string, args ...interface{}) {
 	for i := range p.noLints {
 		if p.noLints[i].Matches(p.Pass.Fset.PositionFor(pos, false)) {
@@ -108,5 +121,9 @@ func (p *Pass) Reportf(pos token.Pos, format string, args ...interface{}) {
 		}
 	}
 
+	if p.warn {
+		fmt.Printf("%s: %s (%s) [WARNING]", p.Fset.PositionFor(pos, false).String(), fmt.Sprintf(format, args...), p.linter)
+		return
+	}
 	p.Pass.Reportf(pos, format+" (%s)", append(args, p.linter)...)
 }

@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/getoutreach/lintroller/internal/common"
-	"github.com/getoutreach/lintroller/internal/nolint"
+	"github.com/getoutreach/lintroller/internal/reporter"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -37,25 +37,25 @@ var reTodo = regexp.MustCompile(`^TODO(\([\w-]+\))?(\[[a-zA-Z\d-]+\])?: .+$`)
 
 // todo is the function that gets passed to the Analyzer which runs the actual
 // analysis for the todo linter on a set of files.
-func todo(pass *analysis.Pass) (interface{}, error) {
+func todo(_pass *analysis.Pass) (interface{}, error) {
 	// Ignore test packages.
-	if common.IsTestPackage(pass) {
+	if common.IsTestPackage(_pass) {
 		return nil, nil
 	}
 
-	// Wrap pass with nolint.Pass to take nolint directives into account.
-	passWithNoLint := nolint.PassWithNoLint(name, pass)
+	// Wrap _pass with reporter.Pass to take nolint directives into account.
+	pass := reporter.NewPass(name, _pass)
 
-	for _, file := range passWithNoLint.Files {
+	for _, file := range pass.Files {
 		// Ignore generated files and test files.
-		if common.IsGenerated(file) || common.IsTestFile(passWithNoLint.Pass, file) {
+		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
 			continue
 		}
 
 		for _, commentGroup := range file.Comments {
 			for _, comment := range commentGroup.List {
 				if !matchTodo(comment) {
-					passWithNoLint.Reportf(comment.Pos(),
+					pass.Reportf(comment.Pos(),
 						"TODO comment must start the line, have a github username and / or a Jira ticket, and be followed by a colon and space: "+
 							"`TODO(<gh-user>)[<jira-ticket>]: `")
 				}

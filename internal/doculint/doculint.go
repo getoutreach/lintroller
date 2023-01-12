@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/getoutreach/lintroller/internal/common"
-	"github.com/getoutreach/lintroller/internal/nolint"
+	"github.com/getoutreach/lintroller/internal/reporter"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -104,14 +104,14 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 
 // doculint is the function that gets passed to the Analyzer which runs the actual
 // analysis for the doculint linter on a set of files.
-func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this function up anymore.
+func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this function up anymore.
 	// Ignore test packages.
-	if common.IsTestPackage(pass) {
+	if common.IsTestPackage(_pass) {
 		return nil, nil
 	}
 
-	// Wrap pass with nolint.Pass to take nolint directives into account.
-	passWithNoLint := nolint.PassWithNoLint(name, pass)
+	// Wrap _pass with reporter.Pass to take nolint directives into account.
+	pass := reporter.NewPass(name, _pass)
 
 	// Variable to keep track of whether or not this current package has a file with
 	// the same name as the package. This is where the package comment should exist.
@@ -121,12 +121,12 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why
 	// This will bypass the package comment reporting.
 	allGenerated := true
 
-	for _, file := range passWithNoLint.Files {
+	for _, file := range pass.Files {
 		// Pull file into a local variable so it can be passed as a parameter safely.
 		file := file
 
 		// Ignore generated files and test files.
-		if common.IsGenerated(file) || common.IsTestFile(passWithNoLint.Pass, file) {
+		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
 			continue
 		}
 
@@ -134,13 +134,13 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why
 		// package was not generated.
 		allGenerated = false
 
-		if passWithNoLint.Pkg.Name() == common.PackageMain || !validatePackages {
+		if pass.Pkg.Name() == common.PackageMain || !validatePackages {
 			// Ignore the main package, it doesn't need a package comment, and ignore package comment
 			// checks if the validatePackages flag was set to false.
 			packageHasFileWithSameName = true
 		} else {
 			// Get current filepath.
-			fp := passWithNoLint.Fset.PositionFor(file.Package, false).Filename
+			fp := pass.Fset.PositionFor(file.Package, false).Filename
 			splitPath := strings.Split(fp, string(os.PathSeparator))
 
 			// Extract filename from path and remove the ".go" suffix.
@@ -148,22 +148,22 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why
 
 			// If the current file name matches the package name, examine the comment
 			// that should exist within it.
-			if fn == passWithNoLint.Pkg.Name() || fn == common.DocFilenameWithoutPath {
+			if fn == pass.Pkg.Name() || fn == common.DocFilenameWithoutPath {
 				packageHasFileWithSameName = true
 
 				// This is the file we'd report the bad package name on, so run the validation here.
-				validatePackageName(passWithNoLint, file.Package, passWithNoLint.Pkg.Name())
+				validatePackageName(pass, file.Package, pass.Pkg.Name())
 
 				if file.Doc == nil {
-					passWithNoLint.Reportf(
+					pass.Reportf(
 						file.Package,
-						"package \"%s\" has no comment associated with it in \"%s.go\"", passWithNoLint.Pkg.Name(), passWithNoLint.Pkg.Name())
+						"package \"%s\" has no comment associated with it in \"%s.go\"", pass.Pkg.Name(), pass.Pkg.Name())
 				} else {
-					expectedPrefix := fmt.Sprintf("Package %s", passWithNoLint.Pkg.Name())
+					expectedPrefix := fmt.Sprintf("Package %s", pass.Pkg.Name())
 					if !strings.HasPrefix(strings.TrimSpace(file.Doc.Text()), expectedPrefix) {
-						passWithNoLint.Reportf(
+						pass.Reportf(
 							file.Package,
-							"comment for package \"%s\" should begin with \"%s\"", passWithNoLint.Pkg.Name(), expectedPrefix)
+							"comment for package \"%s\" should begin with \"%s\"", pass.Pkg.Name(), expectedPrefix)
 					}
 				}
 			}
@@ -176,15 +176,15 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why
 		ast.Inspect(file, func(n ast.Node) bool {
 			switch expr := n.(type) {
 			case *ast.FuncDecl:
-				funcStart = passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line
-				funcEnd = passWithNoLint.Fset.PositionFor(expr.End(), false).Line
+				funcStart = pass.Fset.PositionFor(expr.Pos(), false).Line
+				funcEnd = pass.Fset.PositionFor(expr.End(), false).Line
 
 				if !validateFunctions {
 					// validateFunctions flag was set to false, ignore all functions.
 					return true
 				}
 
-				if passWithNoLint.Pkg.Name() == common.PackageMain && expr.Name.Name == common.FuncMain {
+				if pass.Pkg.Name() == common.PackageMain && expr.Name.Name == common.FuncMain {
 					// Ignore func main in main package.
 					return true
 				}
@@ -196,10 +196,10 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why
 				if (funcEnd - funcStart + 1) >= minFunLen {
 					// Run through function declaration validation rules if the minimum function
 					// length is met or exceeded.
-					validateFuncDecl(passWithNoLint, expr)
+					validateFuncDecl(pass, expr)
 				}
 			case *ast.GenDecl:
-				if pos := passWithNoLint.Fset.PositionFor(expr.Pos(), false).Line; pos >= funcStart && pos <= funcEnd {
+				if pos := pass.Fset.PositionFor(expr.Pos(), false).Line; pos >= funcStart && pos <= funcEnd {
 					// Ignore general declarations that are within a function.
 					return true
 				}
@@ -207,7 +207,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why
 				// Run through general declaration validation rules, currently these
 				// only apply to constants, type, and variable declarations, as you
 				// will see if you dig into the proceeding function call.
-				validateGenDecl(passWithNoLint, expr)
+				validateGenDecl(pass, expr)
 			default:
 				return true
 			}
@@ -218,7 +218,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why
 
 	if !allGenerated {
 		if !packageHasFileWithSameName {
-			passWithNoLint.Reportf(0, "package \"%s\" has no file with the same name containing package comment", passWithNoLint.Pkg.Name())
+			pass.Reportf(0, "package \"%s\" has no file with the same name containing package comment", pass.Pkg.Name())
 		}
 	}
 
@@ -228,7 +228,7 @@ func doculint(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why
 // validateGenDecl validates an *ast.GenDecl to ensure it is up to doculint standards.
 // Currently this function only looks for constants, type, and variable declarations
 // then further validates them.
-func validateGenDecl(reporter nolint.Reporter, expr *ast.GenDecl) {
+func validateGenDecl(reporter reporter.Reporter, expr *ast.GenDecl) {
 	switch expr.Tok { //nolint:exhaustive // Why: We don't need to take into account anything else.
 	case token.CONST:
 		if validateConstants {
@@ -252,7 +252,7 @@ func validateGenDecl(reporter nolint.Reporter, expr *ast.GenDecl) {
 // that if it is a constant block that the block itself has a comment, and each constant
 // within it also has a comment. If it is a standalone constant it ensures that it has a
 // comment associated with it.
-func validateGenDeclConstants(reporter nolint.Reporter, expr *ast.GenDecl) {
+func validateGenDeclConstants(reporter reporter.Reporter, expr *ast.GenDecl) {
 	if expr.Lparen.IsValid() {
 		// Constant block
 		if expr.Doc == nil {
@@ -297,7 +297,7 @@ func validateGenDeclConstants(reporter nolint.Reporter, expr *ast.GenDecl) {
 // that if it is a type declaration block that the block itself has a comment, and each
 // type declaration within it also has a comment. If it is a standalone type declaration
 // it ensures that it has a comment associated with it.
-func validateGenDeclTypes(reporter nolint.Reporter, expr *ast.GenDecl) {
+func validateGenDeclTypes(reporter reporter.Reporter, expr *ast.GenDecl) {
 	if expr.Lparen.IsValid() {
 		// Type block
 		if expr.Doc == nil {
@@ -330,7 +330,7 @@ func validateGenDeclTypes(reporter nolint.Reporter, expr *ast.GenDecl) {
 // that if it is a variable block that the block itself has a comment, and each variable
 // within it also has a comment. If it is a standalone variable it ensures that it has a
 // comment associated with it.
-func validateGenDeclVariables(reporter nolint.Reporter, expr *ast.GenDecl) {
+func validateGenDeclVariables(reporter reporter.Reporter, expr *ast.GenDecl) {
 	if expr.Lparen.IsValid() {
 		// Variable block
 		if expr.Doc == nil {
@@ -376,7 +376,7 @@ func validateGenDeclVariables(reporter nolint.Reporter, expr *ast.GenDecl) {
 
 // validateFuncDecl ensures that an *ast.FuncDecl upholds doculint standards by ensuring
 // it has a corresponding comment that starts with the name of the function.
-func validateFuncDecl(reporter nolint.Reporter, expr *ast.FuncDecl) {
+func validateFuncDecl(reporter reporter.Reporter, expr *ast.FuncDecl) {
 	if expr.Name.Name == common.FuncInit {
 		// Ignore init functions.
 		return
@@ -395,7 +395,7 @@ func validateFuncDecl(reporter nolint.Reporter, expr *ast.FuncDecl) {
 
 // validatePackageName ensures that a given package name follows the conventions that can
 // be read about here: https://blog.golang.org/package-names
-func validatePackageName(reporter nolint.Reporter, pos token.Pos, pkg string) {
+func validatePackageName(reporter reporter.Reporter, pos token.Pos, pkg string) {
 	if strings.ContainsAny(pkg, "_-") {
 		reporter.Reportf(pos, "package \"%s\" should not contain - or _ in name", pkg)
 	}
