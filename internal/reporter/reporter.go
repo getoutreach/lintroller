@@ -60,7 +60,7 @@ type Pass struct {
 
 	*analysis.Pass
 
-	// Functional option supplied configuration
+	// True if this should treat linter issues as warnings.
 	warn bool
 }
 
