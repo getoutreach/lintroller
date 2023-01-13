@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/getoutreach/lintroller/internal/common"
-	"github.com/getoutreach/lintroller/internal/nolint"
+	"github.com/getoutreach/lintroller/internal/reporter"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -48,18 +48,18 @@ var reNoLintNaked = regexp.MustCompile(`^nolint\s*(?:` + whyPattern + `)?$`)
 
 // why is the function that gets passed to the Analyzer which runs the actual analysis
 // for the why linter on a set of files.
-func why(pass *analysis.Pass) (interface{}, error) {
+func why(_pass *analysis.Pass) (interface{}, error) {
 	// Ignore test packages.
-	if common.IsTestPackage(pass) {
+	if common.IsTestPackage(_pass) {
 		return nil, nil
 	}
 
-	// Wrap pass with nolint.Pass to take nolint directives into account.
-	passWithNoLint := nolint.PassWithNoLint(name, pass)
+	// Wrap _pass with reporter.Pass to take nolint directives into account.
+	pass := reporter.NewPass(name, _pass)
 
-	for _, file := range passWithNoLint.Files {
+	for _, file := range pass.Files {
 		// Ignore generated files and test files.
-		if common.IsGenerated(file) || common.IsTestFile(passWithNoLint.Pass, file) {
+		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
 			continue
 		}
 
@@ -69,11 +69,11 @@ func why(pass *analysis.Pass) (interface{}, error) {
 
 				if strings.HasPrefix(text, "nolint") {
 					if reNoLintNaked.MatchString(text) {
-						passWithNoLint.Reportf(comment.Pos(), "nolint directive must contain the specific linters it is nolinting against")
+						pass.Reportf(comment.Pos(), "nolint directive must contain the specific linters it is nolinting against")
 					}
 
 					if !reNoLintWhy.MatchString(text) {
-						passWithNoLint.Reportf(comment.Pos(), "nolint comment must immediately be followed by // Why: <reason> on the same line.")
+						pass.Reportf(comment.Pos(), "nolint comment must immediately be followed by // Why: <reason> on the same line.")
 					}
 				}
 			}
