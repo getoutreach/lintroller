@@ -13,7 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/getoutreach/lintroller/internal/common"
-	"github.com/getoutreach/lintroller/internal/nolint"
+	"github.com/getoutreach/lintroller/internal/reporter"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -35,25 +35,25 @@ var Analyzer = analysis.Analyzer{
 }
 
 // errorlint defines linter for error/trace/log messages
-func errorlint(pass *analysis.Pass) (interface{}, error) {
+func errorlint(_pass *analysis.Pass) (interface{}, error) {
 	// Ignore test packages.
-	if common.IsTestPackage(pass) {
+	if common.IsTestPackage(_pass) {
 		return nil, nil
 	}
 
-	// Wrap pass with nolint.Pass to take nolint directives into account.
-	passWithNoLint := nolint.PassWithNoLint(name, pass)
-	for _, file := range passWithNoLint.Files {
+	// Wrap _pass with reporter.Pass to take nolint directives into account.
+	pass := reporter.NewPass(name, _pass, reporter.Warn())
+	for _, file := range pass.Files {
 		// Ignore generated files and test files.
-		if common.IsGenerated(file) || common.IsTestFile(passWithNoLint.Pass, file) {
+		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
 			continue
 		}
+	}
 
-		for expr := range pass.TypesInfo.Types {
-			pkgName, isCleanString := lintMessageStrings(expr)
-			if !isCleanString {
-				passWithNoLint.Reportf(expr.Pos(), "%s message should be lowercase and last char should not be one of \". : ! \\n\"", pkgName)
-			}
+	for expr := range pass.TypesInfo.Types {
+		pkgName, isCleanString := lintMessageStrings(expr)
+		if !isCleanString {
+			pass.Reportf(expr.Pos(), "%s message should be lowercase and last char should not be one of \". : ! \\n\"", pkgName)
 		}
 	}
 
@@ -67,10 +67,10 @@ func lintMessageStrings(expr ast.Expr) (string, bool) {
 		return "", true
 	}
 
-	if !isPkgDot(call.Fun, "errors", "New") && !isPkgDot(call.Fun, "errors", "Wrap") &&
-		!isPkgDot(call.Fun, "errors", "Wrapf") && !isPkgDot(call.Fun, "log", "Warn") &&
-		!isPkgDot(call.Fun, "log", "Info") && !isPkgDot(call.Fun, "log", "Error") &&
-		!isPkgDot(call.Fun, "trace", "StartSpan") && !isPkgDot(call.Fun, "trace", "StartCall") {
+	if !isDotInPkg(call.Fun, "errors", "New") && !isDotInPkg(call.Fun, "errors", "Wrap") &&
+		!isDotInPkg(call.Fun, "errors", "Wrapf") && !isDotInPkg(call.Fun, "log", "Warn") &&
+		!isDotInPkg(call.Fun, "log", "Info") && !isDotInPkg(call.Fun, "log", "Error") &&
+		!isDotInPkg(call.Fun, "trace", "StartSpan") && !isDotInPkg(call.Fun, "trace", "StartCall") {
 		return "", true
 	}
 
@@ -79,7 +79,7 @@ func lintMessageStrings(expr ast.Expr) (string, bool) {
 	}
 
 	msgIndex := 1
-	if isPkgDot(call.Fun, "errors", "New") {
+	if isDotInPkg(call.Fun, "errors", "New") {
 		msgIndex = 0
 	}
 
@@ -96,6 +96,7 @@ func lintMessageStrings(expr ast.Expr) (string, bool) {
 	if msgString == "" {
 		return "", true
 	}
+
 	isClean := isStringFormatted(msgString)
 	return getPkgName(call.Fun), isClean
 }
@@ -106,8 +107,8 @@ func isIdent(expr ast.Expr, ident string) bool {
 	return ok && id.Name == ident
 }
 
-// isPkgDot checks if pkg.function format is followed
-func isPkgDot(expr ast.Expr, pkg, name string) bool {
+// hasDotInPkg checks if pkg.function format is followed
+func isDotInPkg(expr ast.Expr, pkg, name string) bool {
 	sel, ok := expr.(*ast.SelectorExpr)
 	return ok && isIdent(sel.X, pkg) && isIdent(sel.Sel, name)
 }
