@@ -228,22 +228,22 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 // validateGenDecl validates an *ast.GenDecl to ensure it is up to doculint standards.
 // Currently this function only looks for constants, type, and variable declarations
 // then further validates them.
-func validateGenDecl(report reporter.Reporter, expr *ast.GenDecl) {
+func validateGenDecl(r reporter.Reporter, expr *ast.GenDecl) {
 	switch expr.Tok { //nolint:exhaustive // Why: We don't need to take into account anything else.
 	case token.CONST:
 		if validateConstants {
 			// validateConstants flag was set to true, go ahead and validate constants.
-			validateGenDeclConstants(report, expr)
+			validateGenDeclConstants(r, expr)
 		}
 	case token.TYPE:
 		if validateTypes {
 			// validateTypes flag was set to true, go ahead and validate types.
-			validateGenDeclTypes(report, expr)
+			validateGenDeclTypes(r, expr)
 		}
 	case token.VAR:
 		if validateVariables {
 			// validateVariables flag was set to true, go ahead and validate variables.
-			validateGenDeclVariables(report, expr)
+			validateGenDeclVariables(r, expr)
 		}
 	}
 }
@@ -252,11 +252,11 @@ func validateGenDecl(report reporter.Reporter, expr *ast.GenDecl) {
 // that if it is a constant block that the block itself has a comment, and each constant
 // within it also has a comment. If it is a standalone constant it ensures that it has a
 // comment associated with it.
-func validateGenDeclConstants(report reporter.Reporter, expr *ast.GenDecl) {
+func validateGenDeclConstants(r reporter.Reporter, expr *ast.GenDecl) {
 	if expr.Lparen.IsValid() {
 		// Constant block
 		if expr.Doc == nil {
-			report.Reportf(expr.Pos(), "constant block has no comment associated with it")
+			r.Reportf(expr.Pos(), "constant block has no comment associated with it")
 		}
 	}
 
@@ -269,7 +269,7 @@ func validateGenDeclConstants(report reporter.Reporter, expr *ast.GenDecl) {
 					names = append(names, fmt.Sprintf("%q", vs.Names[j].Name))
 				}
 
-				report.Reportf(vs.Pos(), "constants %s should be separated and each have a comment associated with them", strings.Join(names, ", "))
+				r.Reportf(vs.Pos(), "constants %s should be separated and each have a comment associated with them", strings.Join(names, ", "))
 				continue
 			}
 
@@ -282,12 +282,12 @@ func validateGenDeclConstants(report reporter.Reporter, expr *ast.GenDecl) {
 			}
 
 			if doc == nil {
-				report.Reportf(vs.Pos(), "constant \"%s\" has no comment associated with it", name)
+				r.Reportf(vs.Pos(), "constant \"%s\" has no comment associated with it", name)
 				continue
 			}
 
 			if !strings.HasPrefix(strings.TrimSpace(doc.Text()), name) {
-				report.Reportf(vs.Pos(), "comment for constant \"%s\" should begin with \"%s\"", name, name)
+				r.Reportf(vs.Pos(), "comment for constant \"%s\" should begin with \"%s\"", name, name)
 			}
 		}
 	}
@@ -297,11 +297,11 @@ func validateGenDeclConstants(report reporter.Reporter, expr *ast.GenDecl) {
 // that if it is a type declaration block that the block itself has a comment, and each
 // type declaration within it also has a comment. If it is a standalone type declaration
 // it ensures that it has a comment associated with it.
-func validateGenDeclTypes(report reporter.Reporter, expr *ast.GenDecl) {
+func validateGenDeclTypes(r reporter.Reporter, expr *ast.GenDecl) {
 	if expr.Lparen.IsValid() {
 		// Type block
 		if expr.Doc == nil {
-			report.Reportf(expr.Pos(), "type block has no comment associated with it")
+			r.Reportf(expr.Pos(), "type block has no comment associated with it")
 		}
 	}
 
@@ -315,12 +315,12 @@ func validateGenDeclTypes(report reporter.Reporter, expr *ast.GenDecl) {
 			}
 
 			if doc == nil {
-				report.Reportf(ts.Pos(), "type \"%s\" has no comment associated with it", ts.Name.Name)
+				r.Reportf(ts.Pos(), "type \"%s\" has no comment associated with it", ts.Name.Name)
 				continue
 			}
 
 			if !strings.HasPrefix(strings.TrimSpace(doc.Text()), ts.Name.Name) {
-				report.Reportf(ts.Pos(), "comment for type \"%s\" should begin with \"%s\"", ts.Name.Name, ts.Name.Name)
+				r.Reportf(ts.Pos(), "comment for type \"%s\" should begin with \"%s\"", ts.Name.Name, ts.Name.Name)
 			}
 		}
 	}
@@ -330,11 +330,11 @@ func validateGenDeclTypes(report reporter.Reporter, expr *ast.GenDecl) {
 // that if it is a variable block that the block itself has a comment, and each variable
 // within it also has a comment. If it is a standalone variable it ensures that it has a
 // comment associated with it.
-func validateGenDeclVariables(report reporter.Reporter, expr *ast.GenDecl) {
+func validateGenDeclVariables(r reporter.Reporter, expr *ast.GenDecl) {
 	if expr.Lparen.IsValid() {
 		// Variable block
 		if expr.Doc == nil {
-			report.Reportf(expr.Pos(), "variable block has no comment associated with it")
+			r.Reportf(expr.Pos(), "variable block has no comment associated with it")
 		}
 	}
 
@@ -347,7 +347,7 @@ func validateGenDeclVariables(report reporter.Reporter, expr *ast.GenDecl) {
 					names = append(names, fmt.Sprintf("%q", vs.Names[j].Name))
 				}
 
-				report.Reportf(vs.Pos(), "variables %s should be separated and each have a comment associated with them", strings.Join(names, ", "))
+				r.Reportf(vs.Pos(), "variables %s should be separated and each have a comment associated with them", strings.Join(names, ", "))
 				continue
 			}
 
@@ -363,12 +363,12 @@ func validateGenDeclVariables(report reporter.Reporter, expr *ast.GenDecl) {
 			}
 
 			if doc == nil {
-				report.Reportf(vs.Pos(), "variable %q has no comment associated with it", name)
+				r.Reportf(vs.Pos(), "variable %q has no comment associated with it", name)
 				continue
 			}
 
 			if !strings.HasPrefix(strings.TrimSpace(doc.Text()), name) {
-				report.Reportf(vs.Pos(), "comment for variable \"%s\" should begin with \"%s\"", name, name)
+				r.Reportf(vs.Pos(), "comment for variable \"%s\" should begin with \"%s\"", name, name)
 			}
 		}
 	}
@@ -376,31 +376,31 @@ func validateGenDeclVariables(report reporter.Reporter, expr *ast.GenDecl) {
 
 // validateFuncDecl ensures that an *ast.FuncDecl upholds doculint standards by ensuring
 // it has a corresponding comment that starts with the name of the function.
-func validateFuncDecl(report reporter.Reporter, expr *ast.FuncDecl) {
+func validateFuncDecl(r reporter.Reporter, expr *ast.FuncDecl) {
 	if expr.Name.Name == common.FuncInit {
 		// Ignore init functions.
 		return
 	}
 
 	if expr.Doc == nil {
-		report.Reportf(expr.Pos(), "function \"%s\" has no comment associated with it", expr.Name.Name)
+		r.Reportf(expr.Pos(), "function \"%s\" has no comment associated with it", expr.Name.Name)
 		return
 	}
 
 	// Enforce a space after the function name.
 	if !strings.HasPrefix(strings.TrimSpace(expr.Doc.Text()), expr.Name.Name+" ") {
-		report.Reportf(expr.Pos(), "comment for function \"%s\" should be a sentence that starts with \"%s \"", expr.Name.Name, expr.Name.Name)
+		r.Reportf(expr.Pos(), "comment for function \"%s\" should be a sentence that starts with \"%s \"", expr.Name.Name, expr.Name.Name)
 	}
 }
 
 // validatePackageName ensures that a given package name follows the conventions that can
 // be read about here: https://blog.golang.org/package-names
-func validatePackageName(report reporter.Reporter, pos token.Pos, pkg string) {
+func validatePackageName(r reporter.Reporter, pos token.Pos, pkg string) {
 	if strings.ContainsAny(pkg, "_-") {
-		report.Reportf(pos, "package \"%s\" should not contain - or _ in name", pkg)
+		r.Reportf(pos, "package \"%s\" should not contain - or _ in name", pkg)
 	}
 
 	if pkg != strings.ToLower(pkg) {
-		report.Reportf(pos, "package \"%s\" should be all lowercase", pkg)
+		r.Reportf(pos, "package \"%s\" should be all lowercase", pkg)
 	}
 }
