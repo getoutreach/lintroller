@@ -31,7 +31,10 @@ A valid example is the following:
 	errors.New("org not found in launchdarkly rule")
 An invalid example is the following:
 
-	errors.New("Org not found in LAUNCHDARKLY rule")`
+	errors.New("Org not found in LAUNCHDARKLY rule")
+An invalid example is the following:
+
+	errors.New("Org not found in launchdarkly rule:")`
 
 // Analyzer exports the errorlint analyzer (linter).
 var Analyzer = analysis.Analyzer{
