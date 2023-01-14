@@ -53,7 +53,7 @@ func (l *Lintroller) ValidateTier() error {
 		}
 	case TierSilver:
 		if err := l.EnsureMinimums(&TierSilverConfiguration); err != nil {
-			return errors.Wrap(err, "ensure given configuration meets minimum requirements for silver tier")
+			return errors.Wrap(err, "Ensure given configuration meets minimum requirements for silver tier")
 		}
 	case TierGold:
 		if err := l.EnsureMinimums(&TierGoldConfiguration); err != nil {
@@ -164,7 +164,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 				l.Doculint.MinFunLen = desired.Doculint.MinFunLen
 			} else if l.Doculint.MinFunLen > desired.Doculint.MinFunLen || l.Doculint.MinFunLen < 0 {
 				return fmt.Errorf(
-					"deviation detected from tier minimum defaults in lintroller.doculint.minFunLen, minFunLen must be set within (0, %d]",
+					"deviation detected from tier minimum defaults in lintroller.doculint.minfunlen, minfunlen must be set within (0, %d]",
 					desired.Doculint.MinFunLen)
 			}
 		}
