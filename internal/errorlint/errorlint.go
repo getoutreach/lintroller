@@ -2,10 +2,15 @@
 
 // Description: See package comment for this one file package.
 
-// Package errorlint contains the necessary logic for the error/log/trace linter. The error
+// Package errorlint contains the necessary logic for the error/log/trace linter. This validates that error
+// messages follow Google's go error guidelines
+// (https://google.github.io/styleguide/go/decisions.html#error-strings).
+// Specifically, this requires that error messages start with a lower-case letter, and do not end in
+// punctuation.
+//
+// This validates the following functions:
 // errors.New, errors.WithMessage, errors.WithMessagef, trace.StartCall, trace.StartSpan, log.Warn,
-// log.Error, log.Info, errors.Wrap, errors.Wrapf, fmt.Errorf, errors.Errorf static messages for
-// capitalization. It also checks messages ending in punctuation ". : ! and \n"
+// log.Error, log.Info, errors.Wrap, errors.Wrapf, fmt.Errorf, errors.Errorf
 package errorlint
 
 import (
@@ -24,17 +29,11 @@ import (
 const name = "errorlint"
 
 // doc defines the help text for the error linter.
-const doc = `Ensures that each static message in error/trace/log/ is lowercase.
-
-A valid example is the following:
-
-	errors.New("org not found in launchdarkly rule")
-An invalid example is the following:
-
-	errors.New("Org not found in LAUNCHDARKLY rule")
-An invalid example is the following:
-
-	errors.New("Org not found in launchdarkly rule:")`
+const doc = `Ensures that each error message starts with a lower-case letter and does not end in puctuation.
+// Bad:
+err := fmt.Errorf("Something bad happened.")
+// Good:
+err := fmt.Errorf("something bad happened")`
 
 // Analyzer exports the errorlint analyzer (linter).
 var Analyzer = analysis.Analyzer{
@@ -93,7 +92,7 @@ func lintMessageStrings(file *file, pass *reporter.Pass) {
 			return true
 		}
 
-		if isErrorPackage(call.Fun) || len(call.Args) < 1 {
+		if isNotErrorPackage(call.Fun) || len(call.Args) < 1 {
 			return true
 		}
 
@@ -125,8 +124,8 @@ func lintMessageStrings(file *file, pass *reporter.Pass) {
 	})
 }
 
-// isErrorPackage checks if the ast.Expr package matches the error/fmt/trace/log packages for linter
-func isErrorPackage(expr ast.Expr) bool {
+// isNotErrorPackage checks if the ast.Expr package matches the error/fmt/trace/log packages for linter
+func isNotErrorPackage(expr ast.Expr) bool {
 	return !isDotInPkg(expr, "errors", "New") && !isDotInPkg(expr, "errors", "Wrap") &&
 		!isDotInPkg(expr, "errors", "Wrapf") && !isDotInPkg(expr, "log", "Warn") &&
 		!isDotInPkg(expr, "log", "Info") && !isDotInPkg(expr, "log", "Error") &&
@@ -146,8 +145,6 @@ func getErrorMessage(msg string) string {
 		errormsg = "message should not be capitalized"
 	case isPunct:
 		errormsg = "message should not end with punctuation"
-	default:
-		errormsg = ""
 	}
 
 	return errormsg
