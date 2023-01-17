@@ -177,7 +177,7 @@ func getPkgName(expr ast.Expr) string {
 // isStringFormatted examines error/trace/log strings for incorrect ending and capitalization
 func isStringFormatted(msg string) (isCap, isPunct bool) {
 	last, _ := utf8.DecodeLastRuneInString(msg)
-	isPunct = last == '.' || last == ':' || last == '!' || last == '\n'
+	isPunct = unicode.IsPunct(last) || last == '\n'
 	for _, ch := range msg {
 		if unicode.IsUpper(ch) {
 			isCap = true
