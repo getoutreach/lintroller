@@ -68,12 +68,24 @@ func main() {
 				cfg.Doculint.ValidateConstants, cfg.Doculint.ValidateTypes)},
 			{cfg.Todo.Enabled, &todo.Analyzer},
 			{cfg.Why.Enabled, &why.Analyzer},
-			{cfg.Errorlint.Enabled, &errorlint.Analyzer},
 		}
 
 		var analyzers []*analysis.Analyzer
 		for i := range table {
 			if table[i].Enabled {
+				analyzers = append(analyzers, table[i].Analyzer)
+			}
+		}
+
+		warnTable := []struct {
+			Warn     bool
+			Analyzer *analysis.Analyzer
+		}{
+			{cfg.Errorlint.Warn, &errorlint.Analyzer},
+		}
+
+		for i := range warnTable {
+			if warnTable[i].Warn {
 				analyzers = append(analyzers, table[i].Analyzer)
 			}
 		}

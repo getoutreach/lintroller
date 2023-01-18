@@ -206,7 +206,7 @@ var TierBronzeConfiguration = Lintroller{
 		Enabled: false,
 	},
 	Errorlint: Errorlint{
-		Enabled: false,
+		Warn: false,
 	},
 }
 
@@ -238,7 +238,7 @@ var TierSilverConfiguration = Lintroller{
 		Enabled: true,
 	},
 	Errorlint: Errorlint{
-		Enabled: true,
+		Warn: false,
 	},
 }
 
@@ -270,7 +270,7 @@ var TierGoldConfiguration = Lintroller{
 		Enabled: true,
 	},
 	Errorlint: Errorlint{
-		Enabled: true,
+		Warn: true,
 	},
 }
 
@@ -302,6 +302,6 @@ var TierPlatinumConfiguration = Lintroller{
 		Enabled: true,
 	},
 	Errorlint: Errorlint{
-		Enabled: true,
+		Warn: true,
 	},
 }

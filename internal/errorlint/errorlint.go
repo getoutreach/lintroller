@@ -42,27 +42,6 @@ var Analyzer = analysis.Analyzer{
 	Run:  errorlint,
 }
 
-// file represents a file being linted.
-type file struct {
-	f *ast.File
-}
-
-func (file *file) walk(fn func(ast.Node) bool) {
-	ast.Walk(walker(fn), file.f)
-}
-
-// walker adapts a function to satisfy the ast.Visitor interface.
-// The function returns whether the walk should proceed into the node's children.
-type walker func(ast.Node) bool
-
-func (w walker) Visit(node ast.Node) ast.Visitor {
-	if w(node) {
-		return w
-	}
-
-	return nil
-}
-
 // errorlint defines linter for error/trace/log messages
 func errorlint(_pass *analysis.Pass) (interface{}, error) {
 	// Ignore test packages.
@@ -72,21 +51,20 @@ func errorlint(_pass *analysis.Pass) (interface{}, error) {
 
 	// Wrap _pass with reporter.Pass to take nolint directives into account.
 	pass := reporter.NewPass(name, _pass, reporter.Warn())
-	for _, astFile := range pass.Files {
+	for _, file := range pass.Files {
 		// Ignore generated files and test files.
-		if common.IsGenerated(astFile) || common.IsTestFile(pass.Pass, astFile) {
+		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
 			continue
 		}
-		newFile := &file{f: astFile}
-		lintMessageStrings(newFile, pass)
+		lintMessageStrings(file, pass)
 	}
 
 	return nil, nil
 }
 
 // lintMessageStrings examines error/trace/log message strings for capitalization and valid ending
-func lintMessageStrings(file *file, pass *reporter.Pass) {
-	file.walk(func(node ast.Node) bool {
+func lintMessageStrings(file *ast.File, pass *reporter.Pass) {
+	ast.Inspect(file, func(node ast.Node) bool {
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
 			return true
@@ -165,8 +143,11 @@ func isDotInPkg(expr ast.Expr, pkg, name string) bool {
 // getPkgName returns package name errors/fmt/log/trace
 func getPkgName(expr ast.Expr) string {
 	sel, ok := expr.(*ast.SelectorExpr)
+	if !ok {
+		return ""
+	}
 	for _, pkg := range []string{"errors", "log", "fmt", "trace"} {
-		if ok && isIdent(sel.X, pkg) {
+		if isIdent(sel.X, pkg) {
 			return pkg
 		}
 	}
@@ -177,7 +158,7 @@ func getPkgName(expr ast.Expr) string {
 // isStringFormatted examines error/trace/log strings for incorrect ending and capitalization
 func isStringFormatted(msg string) (isCap, isPunct bool) {
 	last, _ := utf8.DecodeLastRuneInString(msg)
-	isPunct = unicode.IsPunct(last) || last == '\n'
+	isPunct = last == '.' || last == ':' || last == '!' || last == '\n'
 	for _, ch := range msg {
 		if unicode.IsUpper(ch) {
 			isCap = true

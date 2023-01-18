@@ -179,11 +179,11 @@ func (w *Why) MarshalLog(addField func(key string, value interface{})) {
 
 // Errorlint is the configuration type that matches the flags exposed by the errorlint linter.
 type Errorlint struct {
-	// Enabled denotes whether or not this linter is enabled. Defaults to true.
-	Enabled bool `yaml:"enabled"`
+	// Warn denotes whether or not this linter is enabled as a warning. Defaults to true.
+	Warn bool `yaml:"warn"`
 }
 
 // MarshalLog implements the log.Marshaler interface.
-func (w *Errorlint) MarshalLog(addField func(key string, value interface{})) {
-	addField("enabled", w.Enabled)
+func (e *Errorlint) MarshalLog(addField func(key string, value interface{})) {
+	addField("warn", e.Warn)
 }
