@@ -38,13 +38,15 @@ var Analyzer = analysis.Analyzer{
 // analyzers can be ran outside of the context of a vet tool and config can be gathered
 // from elsewhere.
 func NewAnalyzerWithOptions(
-	_minFunLen int, _validatePackages, _validateFunctions, _validateVariables, _validateConstants, _validateTypes bool) *analysis.Analyzer {
+	_minFunLen int, _validatePackages, _validateFunctions,
+	_validateVariables, _validateConstants, _validateTypes, _warn bool) *analysis.Analyzer {
 	minFunLen = _minFunLen
 	validatePackages = _validatePackages
 	validateFunctions = _validateFunctions
 	validateVariables = _validateVariables
 	validateConstants = _validateConstants
 	validateTypes = _validateTypes
+	warn = _warn
 
 	return &Analyzer
 }
@@ -81,6 +83,10 @@ var (
 	// flag that denotes whether or not the linter should validate that types have
 	// satisfactory comments.
 	validateTypes bool
+
+	// warn denotes whether or not lint reports from this linter will result in warnings or
+	// errors.
+	warn bool
 )
 
 func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
@@ -96,6 +102,8 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 		&validateConstants, "validateConstants", true, "a boolean flag that denotes whether or not to validate constant comments")
 	Analyzer.Flags.BoolVar(
 		&validateTypes, "validateTypes", true, "a boolean flag that denotes whether or not to validate type comments")
+	Analyzer.Flags.BoolVar(
+		&warn, "warn", false, "controls whether or not reports from this linter will result in errors or warnings")
 
 	if minFunLen == 0 {
 		minFunLen = 10
@@ -110,8 +118,14 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 		return nil, nil
 	}
 
-	// Wrap _pass with reporter.Pass to take nolint directives into account.
-	pass := reporter.NewPass(name, _pass)
+	var opts []reporter.PassOption
+	if warn {
+		opts = append(opts, reporter.Warn())
+	}
+
+	// Wrap _pass with reporter.Pass to take nolint directives into account and potentially
+	// warn instead of error.
+	pass := reporter.NewPass(name, _pass, opts...)
 
 	// Variable to keep track of whether or not this current package has a file with
 	// the same name as the package. This is where the package comment should exist.

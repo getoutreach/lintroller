@@ -78,6 +78,10 @@ type Header struct {
 	// Enabled denotes whether or not this linter is enabled. Defaults to true.
 	Enabled bool `yaml:"enabled"`
 
+	// Warn denotes whether or not hits from this linter will result in warnings or
+	// errors. Defaults to false.
+	Warn bool `yaml:"warn"`
+
 	// Fields is a list of fields required to be filled out in the header. Defaults
 	// to []string{"Description"}.
 	Fields []string `yaml:"fields"`
@@ -94,6 +98,10 @@ func (h *Header) MarshalLog(addField func(key string, value interface{})) {
 type Copyright struct {
 	// Enabled denotes whether or not this linter is enabled. Defaults to true.
 	Enabled bool `yaml:"enabled"`
+
+	// Warn denotes whether or not hits from this linter will result in warnings or
+	// errors. Defaults to false.
+	Warn bool `yaml:"warn"`
 
 	// Text is the copyright literal string required at the top of each .go file. If this
 	// and pattern are empty this linter is a no-op. Pattern will always take precedence
@@ -118,6 +126,10 @@ func (c *Copyright) MarshalLog(addField func(key string, value interface{})) {
 type Doculint struct {
 	// Enabled denotes whether or not this linter is enabled. Defaults to true.
 	Enabled bool `yaml:"enabled"`
+
+	// Warn denotes whether or not hits from this linter will result in warnings or
+	// errors. Defaults to false.
+	Warn bool `yaml:"warn"`
 
 	// MinFunLen is the minimum function length that doculint will report on if said
 	// function has no related documentation. Defaults to 10.
@@ -159,6 +171,10 @@ func (d *Doculint) MarshalLog(addField func(key string, value interface{})) {
 type Todo struct {
 	// Enabled denotes whether or not this linter is enabled. Defaults to true.
 	Enabled bool `yaml:"enabled"`
+
+	// Warn denotes whether or not hits from this linter will result in warnings or
+	// errors. Defaults to false.
+	Warn bool `yaml:"warn"`
 }
 
 // MarshalLog implements the log.Marshaler interface.
@@ -170,6 +186,10 @@ func (t *Todo) MarshalLog(addField func(key string, value interface{})) {
 type Why struct {
 	// Enabled denotes whether or not this linter is enabled. Defaults to true.
 	Enabled bool `yaml:"enabled"`
+
+	// Warn denotes whether or not hits from this linter will result in warnings or
+	// errors. Defaults to false.
+	Warn bool `yaml:"warn"`
 }
 
 // MarshalLog implements the log.Marshaler interface.
@@ -179,7 +199,11 @@ func (w *Why) MarshalLog(addField func(key string, value interface{})) {
 
 // Errorlint is the configuration type that matches the flags exposed by the errorlint linter.
 type Errorlint struct {
-	// Warn denotes whether or not this linter is enabled as a warning. Defaults to true.
+	// Enabled denotes whether or not this linter is enabled. Defaults to true.
+	Enabled bool `yaml:"enabled"`
+
+	// Warn denotes whether or not hits from this linter will result in warnings or
+	// errors. Defaults to false.
 	Warn bool `yaml:"warn"`
 }
 

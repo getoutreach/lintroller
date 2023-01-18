@@ -61,31 +61,18 @@ func main() {
 			Enabled  bool
 			Analyzer *analysis.Analyzer
 		}{
-			{cfg.Header.Enabled, header.NewAnalyzerWithOptions(strings.Join(cfg.Header.Fields, ","))},
-			{cfg.Copyright.Enabled, copyright.NewAnalyzerWithOptions(cfg.Copyright.Text, cfg.Copyright.Pattern)},
+			{cfg.Header.Enabled, header.NewAnalyzerWithOptions(strings.Join(cfg.Header.Fields, ","), cfg.Header.Warn)},
+			{cfg.Copyright.Enabled, copyright.NewAnalyzerWithOptions(cfg.Copyright.Text, cfg.Copyright.Pattern, cfg.Copyright.Warn)},
 			{cfg.Doculint.Enabled, doculint.NewAnalyzerWithOptions(cfg.Doculint.MinFunLen,
 				cfg.Doculint.ValidatePackages, cfg.Doculint.ValidateFunctions, cfg.Doculint.ValidateVariables,
-				cfg.Doculint.ValidateConstants, cfg.Doculint.ValidateTypes)},
-			{cfg.Todo.Enabled, &todo.Analyzer},
-			{cfg.Why.Enabled, &why.Analyzer},
+				cfg.Doculint.ValidateConstants, cfg.Doculint.ValidateTypes, cfg.Doculint.Warn)},
+			{cfg.Todo.Enabled, todo.NewAnalyzerWithOptions(cfg.Todo.Warn)},
+			{cfg.Why.Enabled, why.NewAnalyzerWithOptions(cfg.Why.Warn)},
 		}
 
 		var analyzers []*analysis.Analyzer
 		for i := range table {
 			if table[i].Enabled {
-				analyzers = append(analyzers, table[i].Analyzer)
-			}
-		}
-
-		warnTable := []struct {
-			Warn     bool
-			Analyzer *analysis.Analyzer
-		}{
-			{cfg.Errorlint.Warn, &errorlint.Analyzer},
-		}
-
-		for i := range warnTable {
-			if warnTable[i].Warn {
 				analyzers = append(analyzers, table[i].Analyzer)
 			}
 		}
