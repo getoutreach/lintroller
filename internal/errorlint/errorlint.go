@@ -89,14 +89,10 @@ func lintMessageStrings(file *ast.File, pass *reporter.Pass) {
 		if err != nil {
 			return false
 		}
-
-		if msgString == "" {
-			return true
-		}
-		errormsg := getErrorMessage(msgString)
-		if errormsg != "" {
-			pkgName := getPkgName(call.Fun)
-			pass.Reportf(node.Pos(), "%s "+errormsg, pkgName)
+		pkgName := getPkgName(call.Fun)
+		errormsg := getErrorMessages(msgString)
+		for _, msg := range errormsg {
+			pass.Reportf(node.Pos(), "%s "+msg, pkgName)
 		}
 		return true
 	})
@@ -112,17 +108,18 @@ func isNotErrorPackage(expr ast.Expr) bool {
 		!isDotInPkg(expr, "errors", "WithMessage") && !isDotInPkg(expr, "errors", "WithMessagef")
 }
 
-// getErrorMessage returns message based on whether it has capitalization, punctuation or not
-func getErrorMessage(msg string) string {
-	isCap, isPunct := isStringFormatted(msg)
-	var errormsg string
-	switch {
-	case isCap && isPunct:
-		errormsg = "message should not be capitalized and should not end with punctuation"
-	case isCap:
-		errormsg = "message should not be capitalized"
-	case isPunct:
-		errormsg = "message should not end with punctuation"
+// getErrorMessages returns messages based on whether error message is empty, is capitalized, or punctuated
+func getErrorMessages(msg string) []string {
+	var errormsg []string
+	if msg == "" {
+		errormsg = append(errormsg, "message should not be empty")
+	} else {
+		if isUpperCase(msg) {
+			errormsg = append(errormsg, "message should not be capitalized")
+		}
+		if hasPunctuation(msg) {
+			errormsg = append(errormsg, "message should not end with punctuation")
+		}
 	}
 
 	return errormsg
@@ -155,15 +152,19 @@ func getPkgName(expr ast.Expr) string {
 	return ""
 }
 
-// isStringFormatted examines error/trace/log strings for incorrect ending and capitalization
-func isStringFormatted(msg string) (isCap, isPunct bool) {
-	last, _ := utf8.DecodeLastRuneInString(msg)
-	isPunct = last == '.' || last == ':' || last == '!' || last == '\n'
+// isUpperCase examines error/trace/log strings for capitalization
+func isUpperCase(msg string) bool {
 	for _, ch := range msg {
 		if unicode.IsUpper(ch) {
-			isCap = true
+			return true
 		}
 	}
 
-	return
+	return false
+}
+
+// hasPunctuation examines error/trace/log strings for ending in punctuation
+func hasPunctuation(msg string) bool {
+	last, _ := utf8.DecodeLastRuneInString(msg)
+	return last == '.' || last == ':' || last == '!' || last == '\n'
 }
