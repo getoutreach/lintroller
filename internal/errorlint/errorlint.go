@@ -17,6 +17,7 @@ import (
 	"go/ast"
 	"go/token"
 	"strconv"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 
@@ -64,6 +65,42 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 		"warn", false, "controls whether or not reports from this linter will result in errors or warnings")
 }
 
+// file represents a file being linted.
+type file struct {
+	f           *ast.File
+	importSpecs map[*ast.File]map[*ast.Ident]string
+}
+
+// ImportDecls creates map of import specs for a *ast.File
+func (file *file) ImportDecls() {
+	for _, is := range file.f.Imports {
+		if is.Name == nil {
+			continue
+		}
+		arr := strings.Split(strings.Trim(is.Path.Value, "\""), "/")
+		pkgName := arr[len(arr)-1]
+		file.importSpecs = make(map[*ast.File]map[*ast.Ident]string)
+		file.importSpecs[file.f] = make(map[*ast.Ident]string)
+		file.importSpecs[file.f][is.Name] = pkgName
+	}
+}
+
+func (file *file) walk(fn func(ast.Node) bool) {
+	ast.Walk(walker(fn), file.f)
+}
+
+// walker adapts a function to satisfy the ast.Visitor interface.
+// The function returns whether the walk should proceed into the node's children.
+type walker func(ast.Node) bool
+
+func (w walker) Visit(node ast.Node) ast.Visitor {
+	if w(node) {
+		return w
+	}
+
+	return nil
+}
+
 // errorlint defines linter for error/trace/log messages
 func errorlint(_pass *analysis.Pass) (interface{}, error) {
 	// Ignore test packages.
@@ -80,32 +117,33 @@ func errorlint(_pass *analysis.Pass) (interface{}, error) {
 	// warn instead of error.
 	pass := reporter.NewPass(name, _pass, opts...)
 
-	for _, file := range pass.Files {
+	for _, astFile := range pass.Files {
 		// Ignore generated files and test files.
-		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
+		if common.IsGenerated(astFile) || common.IsTestFile(pass.Pass, astFile) {
 			continue
 		}
-		lintMessageStrings(file, pass)
+		newFile := &file{f: astFile}
+		newFile.ImportDecls()
+		newFile.lintMessageStrings(pass)
 	}
 
 	return nil, nil
 }
 
 // lintMessageStrings examines error/trace/log message strings for capitalization and valid ending
-func lintMessageStrings(file *ast.File, pass *reporter.Pass) {
-	ast.Inspect(file, func(node ast.Node) bool {
+func (file *file) lintMessageStrings(pass *reporter.Pass) {
+	file.walk(func(node ast.Node) bool {
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
 			return true
 		}
-
-		if isNotErrorPackage(call.Fun) || len(call.Args) < 1 {
+		if file.isNotErrorPackage(call.Fun) || len(call.Args) < 1 {
 			return true
 		}
 
 		msgIndex := 1
-		if isDotInPkg(call.Fun, "errors", "New") || isDotInPkg(call.Fun, "fmt", "Errorf") ||
-			isDotInPkg(call.Fun, "errors", "Errorf") {
+		if file.isDotInPkg(call.Fun, "errors", "New") || file.isDotInPkg(call.Fun, "fmt", "Errorf") ||
+			file.isDotInPkg(call.Fun, "errors", "Errorf") {
 			msgIndex = 0
 		}
 
@@ -118,7 +156,7 @@ func lintMessageStrings(file *ast.File, pass *reporter.Pass) {
 		if err != nil {
 			return false
 		}
-		pkgName := getPkgName(call.Fun)
+		pkgName := file.getPkgName(call.Fun)
 		errormsg := getErrorMessages(msgString)
 		for _, msg := range errormsg {
 			pass.Reportf(node.Pos(), "%s "+msg, pkgName)
@@ -128,13 +166,13 @@ func lintMessageStrings(file *ast.File, pass *reporter.Pass) {
 }
 
 // isNotErrorPackage checks if the ast.Expr package matches the error/fmt/trace/log packages for linter
-func isNotErrorPackage(expr ast.Expr) bool {
-	return !isDotInPkg(expr, "errors", "New") && !isDotInPkg(expr, "errors", "Wrap") &&
-		!isDotInPkg(expr, "errors", "Wrapf") && !isDotInPkg(expr, "log", "Warn") &&
-		!isDotInPkg(expr, "log", "Info") && !isDotInPkg(expr, "log", "Error") &&
-		!isDotInPkg(expr, "trace", "StartSpan") && !isDotInPkg(expr, "trace", "StartCall") &&
-		!isDotInPkg(expr, "fmt", "Errorf") && !isDotInPkg(expr, "errors", "Errorf") &&
-		!isDotInPkg(expr, "errors", "WithMessage") && !isDotInPkg(expr, "errors", "WithMessagef")
+func (file *file) isNotErrorPackage(expr ast.Expr) bool {
+	return !file.isDotInPkg(expr, "errors", "New") && !file.isDotInPkg(expr, "errors", "Wrap") &&
+		!file.isDotInPkg(expr, "errors", "Wrapf") && !file.isDotInPkg(expr, "log", "Warn") &&
+		!file.isDotInPkg(expr, "log", "Info") && !file.isDotInPkg(expr, "log", "Error") &&
+		!file.isDotInPkg(expr, "trace", "StartSpan") && !file.isDotInPkg(expr, "trace", "StartCall") &&
+		!file.isDotInPkg(expr, "fmt", "Errorf") && !file.isDotInPkg(expr, "errors", "Errorf") &&
+		!file.isDotInPkg(expr, "errors", "WithMessage") && !file.isDotInPkg(expr, "errors", "WithMessagef")
 }
 
 // getErrorMessages returns messages based on whether error message is empty, is capitalized, or punctuated
@@ -155,25 +193,44 @@ func getErrorMessages(msg string) []string {
 }
 
 // isIdent checks if ident string is equal to ast.Ident name
-func isIdent(expr ast.Expr, ident string) bool {
+func (file *file) isIdent(expr ast.Expr, ident, identIdentifier string) (string, bool) {
 	id, ok := expr.(*ast.Ident)
-	return ok && id.Name == ident
+	if !ok {
+		return "", false
+	}
+	originalPackage := ""
+	if identIdentifier == "pkg" {
+		pkgInfo := file.importSpecs[file.f]
+		for ident, pkg := range pkgInfo {
+			if id.Name == ident.Name {
+				originalPackage = pkg
+				break
+			}
+		}
+	}
+	return originalPackage, id.Name == ident
 }
 
-// hasDotInPkg checks if pkg.function format is followed
-func isDotInPkg(expr ast.Expr, pkg, name string) bool {
+// isDotInPkg checks if pkg.function format is followed
+func (file *file) isDotInPkg(expr ast.Expr, pkg, name string) bool {
 	sel, ok := expr.(*ast.SelectorExpr)
-	return ok && isIdent(sel.X, pkg) && isIdent(sel.Sel, name)
+	if !ok {
+		return false
+	}
+	originalPackage, isPackageMatching := file.isIdent(sel.X, pkg, "pkg")
+	_, isFunctionMatching := file.isIdent(sel.Sel, name, "func")
+	return (originalPackage != "" || isPackageMatching) && isFunctionMatching
 }
 
 // getPkgName returns package name errors/fmt/log/trace
-func getPkgName(expr ast.Expr) string {
+func (file *file) getPkgName(expr ast.Expr) string {
 	sel, ok := expr.(*ast.SelectorExpr)
 	if !ok {
 		return ""
 	}
 	for _, pkg := range []string{"errors", "log", "fmt", "trace"} {
-		if isIdent(sel.X, pkg) {
+		originalPackage, isPackageMatching := file.isIdent(sel.X, pkg, "pkg")
+		if originalPackage == pkg || isPackageMatching {
 			return pkg
 		}
 	}
@@ -195,5 +252,5 @@ func isUpperCase(msg string) bool {
 // hasPunctuation examines error/trace/log strings for ending in punctuation
 func hasPunctuation(msg string) bool {
 	last, _ := utf8.DecodeLastRuneInString(msg)
-	return last == '.' || last == ':' || last == '!' || last == '\n'
+	return unicode.IsPunct(last) || last == '\n'
 }

@@ -65,7 +65,7 @@ func (l *Lintroller) ValidateTier() error {
 		}
 	default:
 		log.Warn(context.Background(),
-			fmt.Sprintf("provided does not match any of the following: %q, %q, %q, %q (sans-quotes)",
+			fmt.Sprintf("Provided does not match any of the following: %q, %q, %q, %q (sans-quotes)",
 				TierBronze, TierSilver, TierGold, TierPlatinum),
 			log.F{
 				"tier": *l.Tier,
@@ -116,7 +116,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 
 				if !found {
 					return fmt.Errorf(
-						"deviation detected from tier minimum defaults in lintroller.header.fields, fields must contain \"%s\"",
+						"deviation detected from tier minimum defaults in lintroller.header.fields, fields must contain %s",
 						desired.Header.Fields[i])
 				}
 			}
@@ -164,7 +164,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 				l.Doculint.MinFunLen = desired.Doculint.MinFunLen
 			} else if l.Doculint.MinFunLen > desired.Doculint.MinFunLen || l.Doculint.MinFunLen < 0 {
 				return fmt.Errorf(
-					"deviation detected from tier minimum defaults in lintroller.doculint.minfunlen, minfunlen must be set within (0, %d]",
+					"deviation detected from tier minimum defaults in lintroller.doculint.minfunlen, minfunlen must be set within 0 and %d",
 					desired.Doculint.MinFunLen)
 			}
 		}
@@ -206,7 +206,8 @@ var TierBronzeConfiguration = Lintroller{
 		Enabled: false,
 	},
 	Errorlint: Errorlint{
-		Enabled: false,
+		Enabled: true,
+		Warn:    true,
 	},
 }
 
