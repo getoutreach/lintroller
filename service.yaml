@@ -1,64 +1,13 @@
 name: lintroller
 arguments:
-  circleAPIKey: ""
-  commands: []
-  commitGuard: false
-  dependencies:
-    optional: []
-    required: []
   description: Lintroller houses all of the custom linters that Outreach uses for Go projects.
-  go-protoc-imports: []
-  grpcClients: []
-  kubernetes:
-    groups: []
   lintroller: platinum
-  metrics: datadog
-  opslevel:
-    confluenceSpaceKey: ""
-    datadogDashboards:
-      mainLink: ""
-    designDocumentLink: ""
+  ciOptions:
+    skipE2e: true
+    skipDocker: true
   oss: true
-  releaseOptions:
-    allowMajorVersions: false
-    enablePrereleases: false
-    prereleasesBranch: ""
   reportingTeam: fnd-dt
-  resources: {}
   service: false
-  slack: dev-tooling-notifications
-  terraform:
-    datadog:
-      grpc:
-        evaluationWindow: ""
-        latency:
-          percentiles:
-            highTraffic: 0
-            lowTraffic: 0
-          thresholds:
-            highTraffic: 0
-            lowTraffic: 0
-        lowTrafficCountThreshold: 0
-        qos:
-          thresholds:
-            highTraffic: 0
-            lowTraffic: 0
-        tags: []
-      http:
-        evaluationWindow: ""
-        percentiles:
-          highTraffic: 0
-          lowTraffic: 0
-        thresholds:
-          highTraffic: 0
-          lowCount: 0
-          lowTraffic: 0
-      pods:
-        thresholds:
-          availableLowCount: 0
-  tracing: opentelemetry
-  tutorial: false
-  validation: false
   vaultSecrets:
     - deploy/honeycomb_new/%(environment)s/honeycomb
     - deploy/launchdarkly/%(environment)s/launchdarkly
@@ -71,4 +20,3 @@ modules:
   - name: github.com/getoutreach/stencil-circleci
   - name: github.com/getoutreach/stencil-actions
   - name: github.com/getoutreach/stencil-discovery
-migrated: true
