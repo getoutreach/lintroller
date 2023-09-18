@@ -7,7 +7,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	golang.org/x/tools v0.13.0
 	gopkg.in/yaml.v3 v3.0.1
-	gotest.tools/v3 v3.5.0
+	gotest.tools/v3 v3.5.1
 )
 
 require (
