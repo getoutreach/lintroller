@@ -289,8 +289,8 @@ func validateGenDeclConstants(r reporter.Reporter, expr *ast.GenDecl, stack []as
 			//
 			// const (
 			//     ValA MyEnum = 1
-			//	   ValB MyEnum = 4
-			//	   ValC MyEnum = iota
+			//     ValB MyEnum = 4
+			//     ValC MyEnum = iota
 			// )
 
 			// See if it's enum-like -- are we at the top level of the doc?
