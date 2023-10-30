@@ -24,7 +24,7 @@ const name = "doculint"
 
 // doc defines the help text for the doculint linter.
 const doc = `Checks for proper function, type, package, constant, and string and numeric
-literal documentation in accordance with godoc standards.`
+ literal documentation in accordance with godoc standards.`
 
 // Analyzer exports the doculint analyzer (linter).
 var Analyzer = analysis.Analyzer{
