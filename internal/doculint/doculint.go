@@ -23,8 +23,8 @@ import (
 const name = "doculint"
 
 // doc defines the help text for the doculint linter.
-const doc = `Checks for proper function, type, package, constant, and string and numeric 
-literal documentation in accordance with godoc standards.`
+const doc = `Checks for proper function, type, package, constant, and string and numeric
+ literal documentation in accordance with godoc standards.`
 
 // Analyzer exports the doculint analyzer (linter).
 var Analyzer = analysis.Analyzer{
@@ -173,7 +173,23 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 		// end locations.
 		var funcStart, funcEnd int
 
+		var stack []ast.Node
 		ast.Inspect(file, func(n ast.Node) bool {
+			// Taken from: https://stackoverflow.com/a/66810485
+			// Manage the stack. Inspect calls a function like this:
+			//   f(node)
+			//   for each child {
+			//      f(child) // and recursively for child's children
+			//   }
+			//   f(nil)
+			if n == nil {
+				// Done with node's children. Pop.
+				stack = stack[:len(stack)-1]
+			} else {
+				// Push the current node for children.
+				stack = append(stack, n)
+			}
+
 			switch expr := n.(type) {
 			case *ast.FuncDecl:
 				funcStart = pass.Fset.PositionFor(expr.Pos(), false).Line
@@ -207,7 +223,7 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 				// Run through general declaration validation rules, currently these
 				// only apply to constants, type, and variable declarations, as you
 				// will see if you dig into the proceeding function call.
-				validateGenDecl(pass, expr)
+				validateGenDecl(pass, expr, stack)
 			default:
 				return true
 			}
@@ -228,12 +244,12 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 // validateGenDecl validates an *ast.GenDecl to ensure it is up to doculint standards.
 // Currently this function only looks for constants, type, and variable declarations
 // then further validates them.
-func validateGenDecl(r reporter.Reporter, expr *ast.GenDecl) {
+func validateGenDecl(r reporter.Reporter, expr *ast.GenDecl, stack []ast.Node) {
 	switch expr.Tok { //nolint:exhaustive // Why: We don't need to take into account anything else.
 	case token.CONST:
 		if validateConstants {
 			// validateConstants flag was set to true, go ahead and validate constants.
-			validateGenDeclConstants(r, expr)
+			validateGenDeclConstants(r, expr, stack)
 		}
 	case token.TYPE:
 		if validateTypes {
@@ -252,10 +268,92 @@ func validateGenDecl(r reporter.Reporter, expr *ast.GenDecl) {
 // that if it is a constant block that the block itself has a comment, and each constant
 // within it also has a comment. If it is a standalone constant it ensures that it has a
 // comment associated with it.
-func validateGenDeclConstants(r reporter.Reporter, expr *ast.GenDecl) {
+func validateGenDeclConstants(r reporter.Reporter, expr *ast.GenDecl, stack []ast.Node) {
 	if expr.Lparen.IsValid() {
 		// Constant block
 		if expr.Doc == nil {
+			// We are creating an explicit exception to the commenting rule for constants if a block is what we declare to
+			// be "enum-like".  In these cases, the commentingi of the enum type declaration itself should be comprehensively
+			// descriptive of the enum's usage, and the values should be well-named to be self-descriptive, though comments
+			// may also be added to specific value types if it is helpful -- we simply want to stop mandating them.  The
+			// entire block has to match an explicit set of criteria to exclude itself (and all of its members) from the
+			// commenting rule:
+			// 1. Immediately above the constant block must be a (commented) simple type declaration (i.e. `type MyEnum int`)
+			// 2. The constant block must have ONLY simple value declarations in it (comments are also allowed)
+			// 3. Every single value declaration in the comment block must explicitly declare the value as typed with the
+			//    same type as the type block above the enum.
+			//
+			// Example of valid block:
+			// // MyEnum is a wonderful enum
+			// type MyEnum int
+			//
+			// const (
+			//     ValA MyEnum = 1
+			//     ValB MyEnum = 4
+			//     ValC MyEnum = iota
+			// )
+
+			// See if it's enum-like -- are we at the top level of the doc?
+			if len(stack) == 2 {
+				if parent, worked := stack[0].(*ast.File); worked {
+					// Okay, now find our previous sibling to see if it's a type declaration
+					for i, decl := range parent.Decls {
+						if decl != expr {
+							continue
+						}
+
+						if i == 0 {
+							// No prev sibling somehow, stop checking -- it won't be an enum
+							break
+						}
+
+						prevSib, is := parent.Decls[i-1].(*ast.GenDecl)
+						if !is || prevSib.Tok != token.TYPE || len(prevSib.Specs) != 1 {
+							// Previous sibling isn't a simple type declaration that looks like maybe an enum
+							break
+						}
+
+						typeSpec, is := prevSib.Specs[0].(*ast.TypeSpec)
+						if !is {
+							// Not a type spec, won't be an enum
+							break
+						}
+
+						// Looking good!  Now check all the elements inside the const block to make sure they're the same type.
+						foundInvalid := false
+						for i := range expr.Specs {
+							vs, ok := expr.Specs[i].(*ast.ValueSpec)
+							if !ok {
+								// Const block needs all elements to be value declarations to be an enum -- fail
+								foundInvalid = true
+								break
+							}
+
+							ns, ok := vs.Type.(*ast.Ident)
+							if !ok {
+								// Declaration needs to have a type associated with it to be an enum -- fail
+								foundInvalid = true
+								break
+							}
+
+							if ns.Name != typeSpec.Name.Name {
+								// Declaration's type needs to match the type from the declaration right above the block -- fail
+								foundInvalid = true
+								break
+							}
+						}
+
+						if !foundInvalid {
+							// All members of the const block were using the same type as the element above it.  Call it an enum,
+							// which doesn't need a comment, and move on!
+							return
+						}
+
+						break
+					}
+				}
+			}
+
 			r.Reportf(expr.Pos(), "constant block has no comment associated with it")
 		}
 	}
