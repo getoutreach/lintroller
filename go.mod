@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/getoutreach/gobox v1.73.2
 	github.com/pkg/errors v0.9.1
-	golang.org/x/tools v0.16.1
+	golang.org/x/tools v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.1
 )
