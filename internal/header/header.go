@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/getoutreach/lintroller/internal/common"
+	"github.com/getoutreach/lintroller/internal/reporter"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -58,8 +59,9 @@ var Analyzer = analysis.Analyzer{
 // that would have been defined via flags if this was ran as a vet tool. This is so the
 // analyzers can be ran outside of the context of a vet tool and config can be gathered
 // from elsewhere.
-func NewAnalyzerWithOptions(_rawFields string) *analysis.Analyzer {
+func NewAnalyzerWithOptions(_rawFields string, _warn bool) *analysis.Analyzer {
 	rawFields = _rawFields
+	warn = _warn
 	return &Analyzer
 }
 
@@ -70,26 +72,42 @@ var (
 	// comma-separated list of fields required to be filled out within the header of a
 	// file.
 	rawFields string
+
+	// warn denotes whether or not lint reports from this linter will result in warnings or
+	// errors.
+	warn bool
 )
 
 func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
-	Analyzer.Flags.StringVar(&rawFields, "fields", "Description", "comma-separated list of fields required to be filled out in the header")
+	Analyzer.Flags.StringVar(&rawFields,
+		"fields", "Description", "comma-separated list of fields required to be filled out in the header")
+	Analyzer.Flags.BoolVar(&warn,
+		"warn", false, "controls whether or not reports from this linter will result in errors or warnings")
 }
 
 // header is the function that gets passed to the Analyzer which runs the actual
 // analysis for the header linter on a set of files.
-func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this up.
+func header(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this up.
 	// Ignore test packages.
-	if common.IsTestPackage(pass) {
+	if common.IsTestPackage(_pass) {
 		return nil, nil
 	}
+
+	var opts []reporter.PassOption
+	if warn {
+		opts = append(opts, reporter.Warn())
+	}
+
+	// Wrap _pass with reporter.Pass to take nolint directives into account and potentially
+	// warn instead of error.
+	pass := reporter.NewPass(name, _pass, opts...)
 
 	fields := strings.Split(rawFields, ",")
 	validFields := make(map[string]bool, len(fields))
 
 	for _, file := range pass.Files {
 		// Ignore generated files and test files.
-		if common.IsGenerated(file) || common.IsTestFile(pass, file) {
+		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
 			continue
 		}
 
