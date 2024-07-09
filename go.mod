@@ -3,7 +3,7 @@ module github.com/getoutreach/lintroller
 go 1.21
 
 require (
-	github.com/getoutreach/gobox v1.89.0
+	github.com/getoutreach/gobox v1.90.2
 	github.com/pkg/errors v0.9.1
 	golang.org/x/tools v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
