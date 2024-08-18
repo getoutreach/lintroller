@@ -5,11 +5,11 @@
 ## <<Stencil::Block(toolverOverride)>>
 golang 1.23.0
 nodejs 20.12.2
-mage latest
 ## <</Stencil::Block>>
 # Note: Versions in this block do not override the default versions above
 # but sometimes you have to declare additional versions of the same tool
 # while leaving the 'default' version intact for the infra.
 # The most common case is nodejs.
 ## <<Stencil::Block(toolver)>>
+mage 1.14.0
 ## <</Stencil::Block>>
