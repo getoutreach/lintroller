@@ -74,7 +74,7 @@ func LoadOtherFilesIntoFset(pass *analysis.Pass) error {
 	for _, fn := range pass.OtherFiles {
 		content, err := os.ReadFile(fn)
 		if err != nil {
-			return errors.Wrapf(err, "return file content for \"%s\"", fn)
+			return errors.Wrapf(err, "return file content for %s", fn)
 		}
 
 		tf := pass.Fset.AddFile(fn, -1, len(content))
