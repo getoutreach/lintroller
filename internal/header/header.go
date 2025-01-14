@@ -140,7 +140,7 @@ func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: 
 						prefix := fmt.Sprintf("%s: ", fields[i])
 
 						if strings.HasPrefix(cleanComment, prefix) {
-							if len(strings.TrimPrefix(cleanComment, prefix)) > 0 {
+							if strings.TrimPrefix(cleanComment, prefix) != "" {
 								// If the current comment line has a field prefix we're looking for and
 								// data proceeding the colon and space after the colon, we will mark the
 								// field as valid.
