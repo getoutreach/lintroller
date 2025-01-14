@@ -122,9 +122,6 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 	allGenerated := true
 
 	for _, file := range pass.Files {
-		// Pull file into a local variable so it can be passed as a parameter safely.
-		file := file
-
 		// Ignore generated files and test files.
 		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
 			continue
