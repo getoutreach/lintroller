@@ -122,7 +122,7 @@ func (p *Pass) Reportf(pos token.Pos, format string, args ...interface{}) {
 	}
 
 	if p.warn {
-		fmt.Printf("%s: %s (%s) [WARNING]", p.Fset.PositionFor(pos, false).String(), fmt.Sprintf(format, args...), p.linter)
+		fmt.Printf("%s: %s (%s) [WARNING]\n", p.Fset.PositionFor(pos, false).String(), fmt.Sprintf(format, args...), p.linter)
 		return
 	}
 	p.Pass.Reportf(pos, format+" (%s)", append(args, p.linter)...)
