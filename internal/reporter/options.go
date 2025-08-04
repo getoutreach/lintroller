@@ -1,4 +1,4 @@
-// Copyright 2023 Outreach Corporation. All Rights Reserved.
+// Copyright 2023 Outreach Corporation. Licensed under the Apache License 2.0.
 
 // Description: This file implements functional options for the Pass type.
 
