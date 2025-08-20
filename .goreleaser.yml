@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+before:
+  hooks:
+    - make dep
+builds:
+  - main: ./cmd/lintroller
+    id: &name lintroller
+    binary: *name
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - '-w -s -X "github.com/getoutreach/gobox/pkg/app.Version=v{{ .Version }}"'
+    env:
+      - CGO_ENABLED=0
+      ## <<Stencil::Block(lintrollerAdditionalEnv)>>
+
+      ## <</Stencil::Block>>
+
+archives: []
+checksum:
+  name_template: "checksums.txt"
+release:
+  # We handle releasing via semantic-release
+  disable: true
