@@ -6,6 +6,8 @@ arguments:
   description: Lintroller houses all of the custom linters that Outreach uses for Go projects.
   lintroller: platinum
   oss: true
+  releaseOptions:
+    force: true # ensure that binaries are generated
   reportingTeam: fnd-dt
   service: false
   vaultSecrets:
