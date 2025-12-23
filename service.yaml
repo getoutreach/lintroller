@@ -10,6 +10,8 @@ arguments:
     force: true # ensure that binaries are generated
   reportingTeam: fnd-dt
   service: false
+  go:
+    stanza: 1.25.0
   versions:
     go: 1.25.5
   vaultSecrets:
