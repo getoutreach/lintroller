@@ -10,6 +10,8 @@ arguments:
     force: true # ensure that binaries are generated
   reportingTeam: fnd-dt
   service: false
+  versions:
+    go: 1.25.5
   vaultSecrets:
     - deploy/honeycomb_new/%(environment)s/honeycomb
     - deploy/launchdarkly/%(environment)s/launchdarkly

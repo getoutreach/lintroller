@@ -2,7 +2,7 @@ module github.com/getoutreach/lintroller
 
 go 1.23.0
 
-toolchain go1.23.4
+toolchain go1.25.5
 
 require (
 	github.com/getoutreach/gobox v1.107.1
