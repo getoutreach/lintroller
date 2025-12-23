@@ -14,7 +14,9 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for additional information on con
 
 <!-- <<Stencil::Block(jiraPrefix)>> -->
 
-**JIRA ID**: XX-XX
+## Jira ID
+
+[XX-XX]
 
 <!-- <</Stencil::Block>> -->
 
