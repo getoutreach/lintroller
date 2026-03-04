@@ -1,8 +1,8 @@
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/getoutreach/gobox v1.110.5 h1:JKAQM/TJ4RRC8Yo4qj8JMeneiHoAK1uX/Uqt7YnGBmk=
-github.com/getoutreach/gobox v1.110.5/go.mod h1:ELBqq2gTIHG8gf1hc6NepmA6HMAxQq8vYqsD+qUrxSU=
+github.com/getoutreach/gobox v1.111.1 h1:oCWUD3LW9kTO2KEBZ4iuE9L9iYUPQ+sVeqpXkTNnehs=
+github.com/getoutreach/gobox v1.111.1/go.mod h1:GcWWigrlTkYgedLFcCm2LOrCv8z+exYl3jnwyGnOeU0=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
