@@ -22,6 +22,21 @@ run through
 [unitchecker](https://pkg.go.dev/golang.org/x/tools/go/analysis/unitchecker).
 This makes lintroller compatible with `go vet`, the recommended way to run lintroller.
 
+### Configuration
+
+When lintroller is run with `-config`, configuration is read from the
+`lintroller` YAML key.
+
+`lintroller.exclusions.paths` accepts regex patterns for excluding files and
+packages by path.
+
+```yaml
+lintroller:
+  exclusions:
+    paths:
+      - '(^|/)node_modules(/|$)'
+```
+
 ### Implemented rules
 
 - `copyright` - Checks that files start with a header that matches a regular expression.

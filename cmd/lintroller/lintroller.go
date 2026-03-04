@@ -7,6 +7,8 @@ import (
 	"flag"
 	"io"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/getoutreach/gobox/pkg/events"
@@ -56,6 +58,11 @@ func main() {
 			"path": configPath,
 		})
 
+		exclusionPaths, err := cfg.Lintroller.CompiledExclusionPaths()
+		if err != nil {
+			log.Fatal(context.Background(), "compile exclusion paths", events.NewErrorInfo(err))
+		}
+
 		table := []struct {
 			Enabled  bool
 			Analyzer *analysis.Analyzer
@@ -72,7 +79,7 @@ func main() {
 		var analyzers []*analysis.Analyzer
 		for i := range table {
 			if table[i].Enabled {
-				analyzers = append(analyzers, table[i].Analyzer)
+				analyzers = append(analyzers, withExclusionPaths(table[i].Analyzer, exclusionPaths))
 			}
 		}
 
@@ -89,4 +96,50 @@ func main() {
 		&todo.Analyzer,
 		&why.Analyzer,
 	)
+}
+
+// withExclusionPaths wraps the given analyzer and skips execution for excluded paths.
+func withExclusionPaths(analyzer *analysis.Analyzer, exclusionPaths []*regexp.Regexp) *analysis.Analyzer {
+	if len(exclusionPaths) == 0 {
+		return analyzer
+	}
+
+	wrapped := *analyzer
+	wrapped.Run = func(pass *analysis.Pass) (interface{}, error) {
+		if isExcludedPass(pass, exclusionPaths) {
+			return nil, nil
+		}
+
+		return analyzer.Run(pass)
+	}
+
+	return &wrapped
+}
+
+// isExcludedPass reports whether the analysis pass should be skipped due to exclusions.
+func isExcludedPass(pass *analysis.Pass, exclusionPaths []*regexp.Regexp) bool {
+	if matchesAnyExclusion(pass.Pkg.Path(), exclusionPaths) {
+		return true
+	}
+
+	for _, file := range pass.Files {
+		filename := pass.Fset.Position(file.Pos()).Filename
+		if matchesAnyExclusion(filename, exclusionPaths) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// matchesAnyExclusion reports whether a path matches any configured exclusion pattern.
+func matchesAnyExclusion(path string, exclusionPaths []*regexp.Regexp) bool {
+	normalizedPath := strings.ReplaceAll(filepath.ToSlash(path), "\\", "/")
+	for _, exclusionPath := range exclusionPaths {
+		if exclusionPath.MatchString(normalizedPath) {
+			return true
+		}
+	}
+
+	return false
 }
