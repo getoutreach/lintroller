@@ -8,7 +8,9 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -42,6 +44,10 @@ func FromFile(path string) (*Config, error) {
 		return nil, errors.Wrap(err, "validate the tier given to lintroller")
 	}
 
+	if _, err := cfg.Lintroller.CompiledExclusionPaths(); err != nil {
+		return nil, errors.Wrap(err, "validate lintroller exclusions")
+	}
+
 	return &cfg, nil
 }
 
@@ -53,6 +59,9 @@ type Lintroller struct {
 	// Tier is the desired tier you desire your service to pass for in ops-level.
 	Tier *string `yaml:"tier"`
 
+	// Exclusions holds path matching rules for excluding files and packages.
+	Exclusions Exclusions `yaml:"exclusions"`
+
 	// Configuration for individual linters proceeding:
 	Header    Header    `yaml:"header"`
 	Copyright Copyright `yaml:"copyright"`
@@ -63,11 +72,41 @@ type Lintroller struct {
 
 // MarshalLog implements the log.Marshaler interface.
 func (lr *Lintroller) MarshalLog(addField func(key string, value interface{})) {
+	addField("exclusions", lr.Exclusions)
 	addField("header", lr.Header)
 	addField("copyright", lr.Copyright)
 	addField("doculint", lr.Doculint)
 	addField("todo", lr.Todo)
 	addField("why", lr.Why)
+}
+
+// CompiledExclusionPaths compiles exclusions.path patterns into regular expressions.
+func (lr *Lintroller) CompiledExclusionPaths() ([]*regexp.Regexp, error) {
+	if len(lr.Exclusions.Paths) == 0 {
+		return nil, nil
+	}
+
+	compiled := make([]*regexp.Regexp, 0, len(lr.Exclusions.Paths))
+	for i, path := range lr.Exclusions.Paths {
+		re, err := regexp.Compile(path)
+		if err != nil {
+			return nil, fmt.Errorf("invalid exclusions.paths[%d] pattern %q: %w", i, path, err)
+		}
+		compiled = append(compiled, re)
+	}
+
+	return compiled, nil
+}
+
+// Exclusions is the lintroller configuration that allows users to skip files/packages by path.
+type Exclusions struct {
+	// Paths is a list of regular expressions used for excluding files/packages by path.
+	Paths []string `yaml:"paths"`
+}
+
+// MarshalLog implements the log.Marshaler interface.
+func (e *Exclusions) MarshalLog(addField func(key string, value interface{})) {
+	addField("paths", e.Paths)
 }
 
 // Header is the configuration type that matches the flags exposed by the header
