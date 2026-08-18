@@ -2,6 +2,9 @@
 version: "2"
 lintroller:
   tier: "platinum"
+  exclusions:
+    paths:
+      - "(^|/)node_modules(/|$)"
 output:
   formats:
     text:
@@ -12,6 +15,7 @@ linters:
   enable:
     - bodyclose
     - copyloopvar # Detects places where loop variables are copied.
+    - depguard
     - dogsled
     - errcheck
     - errorlint
@@ -34,6 +38,14 @@ linters:
     # - unused # Previously suppressed by --fast in v1, disabling for now to avoid noise
     - whitespace
   settings:
+    depguard:
+      rules:
+        main:
+          files:
+            - "$all"
+          deny:
+            - pkg: "github.com/getoutreach/async/pkg/async"
+              desc: "archived since 2022; use github.com/getoutreach/gobox/pkg/async instead"
     dupl:
       threshold: 100
     errcheck:
@@ -155,6 +167,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - node_modules
 issues:
   max-same-issues: 10
 formatters:
@@ -167,3 +180,4 @@ formatters:
       - third_party$
       - builtin$
       - examples$
+      - node_modules
