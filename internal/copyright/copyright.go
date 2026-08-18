@@ -190,7 +190,7 @@ func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 		}
 
 		if !foundCopyright {
-			pass.Reportf(0,
+			pass.Reportf(file.Package,
 				"file \"%s\" does not contain the required copyright %s [%s] (sans-brackets) as a comment on line 1",
 				fp, c.stringMatchType(), c.stringMatchLiteral())
 		}
