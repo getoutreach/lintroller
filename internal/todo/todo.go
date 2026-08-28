@@ -30,6 +30,28 @@ var Analyzer = analysis.Analyzer{
 	Run:  todo,
 }
 
+// NewAnalyzerWithOptions returns the Analyzer package-level variable, with the options
+// that would have been defined via flags if this was ran as a vet tool. This is so the
+// analyzers can be ran outside of the context of a vet tool and config can be gathered
+// from elsewhere.
+func NewAnalyzerWithOptions(_warn bool) *analysis.Analyzer {
+	warn = _warn
+	return &Analyzer
+}
+
+// Variable block to keep track of flags whose values are collected at runtime. See the
+// init function that immediately proceeds this block to see more.
+var (
+	// warn denotes whether or not lint reports from this linter will result in warnings or
+	// errors.
+	warn bool
+)
+
+func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
+	Analyzer.Flags.BoolVar(&warn,
+		"warn", false, "controls whether or not reports from this linter will result in errors or warnings")
+}
+
 // reTodo is the regular expression that matches the required TODO format by this
 // linter. This is a TODO followed by one or more of a username in parens and a
 // Jira ticket ID in brackets.
@@ -43,8 +65,14 @@ func todo(_pass *analysis.Pass) (interface{}, error) {
 		return nil, nil
 	}
 
-	// Wrap _pass with reporter.Pass to take nolint directives into account.
-	pass := reporter.NewPass(name, _pass)
+	var opts []reporter.PassOption
+	if warn {
+		opts = append(opts, reporter.Warn())
+	}
+
+	// Wrap _pass with reporter.Pass to take nolint directives into account and potentially
+	// warn instead of error.
+	pass := reporter.NewPass(name, _pass, opts...)
 
 	for _, file := range pass.Files {
 		// Ignore generated files and test files.

@@ -49,23 +49,23 @@ func (l *Lintroller) ValidateTier() error {
 	switch strings.ToLower(*l.Tier) {
 	case TierBronze:
 		if err := l.EnsureMinimums(&TierBronzeConfiguration); err != nil {
-			return errors.Wrap(err, "ensure given configuration meets minimum requirments for bronze tier")
+			return errors.Wrap(err, "ensure given configuration meets minimum requirements for bronze tier")
 		}
 	case TierSilver:
 		if err := l.EnsureMinimums(&TierSilverConfiguration); err != nil {
-			return errors.Wrap(err, "ensure given configuration meets minimum requirments for silver tier")
+			return errors.Wrap(err, "ensure given configuration meets minimum requirements for silver tier")
 		}
 	case TierGold:
 		if err := l.EnsureMinimums(&TierGoldConfiguration); err != nil {
-			return errors.Wrap(err, "ensure given configuration meets minimum requirments for gold tier")
+			return errors.Wrap(err, "ensure given configuration meets minimum requirements for gold tier")
 		}
 	case TierPlatinum:
 		if err := l.EnsureMinimums(&TierPlatinumConfiguration); err != nil {
-			return errors.Wrap(err, "ensure given configuration meets minimum requirments for platinum tier")
+			return errors.Wrap(err, "ensure given configuration meets minimum requirements for platinum tier")
 		}
 	default:
 		log.Warn(context.Background(),
-			fmt.Sprintf("provided does not match any of the following: %q, %q, %q, %q (sans-quotes)",
+			fmt.Sprintf("Provided does not match any of the following: %q, %q, %q, %q (sans-quotes)",
 				TierBronze, TierSilver, TierGold, TierPlatinum),
 			log.F{
 				"tier": *l.Tier,
@@ -116,7 +116,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 
 				if !found {
 					return fmt.Errorf(
-						"deviation detected from tier minimum defaults in lintroller.header.fields, fields must contain \"%s\"",
+						"deviation detected from tier minimum defaults in lintroller.header.fields, fields must contain %s",
 						desired.Header.Fields[i])
 				}
 			}
@@ -164,7 +164,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 				l.Doculint.MinFunLen = desired.Doculint.MinFunLen
 			} else if l.Doculint.MinFunLen > desired.Doculint.MinFunLen || l.Doculint.MinFunLen < 0 {
 				return fmt.Errorf(
-					"deviation detected from tier minimum defaults in lintroller.doculint.minFunLen, minFunLen must be set within (0, %d]",
+					"deviation detected from tier minimum defaults in lintroller.doculint.minfunlen, minfunlen must be set within 0 and %d",
 					desired.Doculint.MinFunLen)
 			}
 		}
@@ -205,6 +205,10 @@ var TierBronzeConfiguration = Lintroller{
 	Why: Why{
 		Enabled: false,
 	},
+	Errorlint: Errorlint{
+		Enabled: true,
+		Warn:    true,
+	},
 }
 
 // TierSilverConfiguration is the Lintroller configuration minumums that correspond
@@ -233,6 +237,10 @@ var TierSilverConfiguration = Lintroller{
 	},
 	Why: Why{
 		Enabled: true,
+	},
+	Errorlint: Errorlint{
+		Enabled: true,
+		Warn:    true,
 	},
 }
 
@@ -263,6 +271,10 @@ var TierGoldConfiguration = Lintroller{
 	Why: Why{
 		Enabled: true,
 	},
+	Errorlint: Errorlint{
+		Enabled: true,
+		Warn:    true,
+	},
 }
 
 // TierPlatinumConfiguration is the Lintroller configuration minumums that correspond
@@ -291,5 +303,9 @@ var TierPlatinumConfiguration = Lintroller{
 	},
 	Why: Why{
 		Enabled: true,
+	},
+	Errorlint: Errorlint{
+		Enabled: true,
+		Warn:    true,
 	},
 }

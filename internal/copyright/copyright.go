@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/getoutreach/lintroller/internal/common"
+	"github.com/getoutreach/lintroller/internal/reporter"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -36,9 +37,10 @@ var Analyzer = analysis.Analyzer{
 // that would have been defined via flags if this was ran as a vet tool. This is so the
 // analyzers can be ran outside of the context of a vet tool and config can be gathered
 // from elsewhere.
-func NewAnalyzerWithOptions(_text, _pattern string) *analysis.Analyzer {
+func NewAnalyzerWithOptions(_text, _pattern string, _warn bool) *analysis.Analyzer {
 	text = strings.TrimSpace(_text)
 	pattern = strings.TrimSpace(_pattern)
+	warn = _warn
 	return &Analyzer
 }
 
@@ -52,6 +54,10 @@ var (
 	// pattern is a variable that gets collected via flags. This variable contains the copyright
 	// string as a regular expression pattern that is required to be at the top of each .go file.
 	pattern string
+
+	// warn denotes whether or not lint reports from this linter will result in warnings or
+	// errors.
+	warn bool
 )
 
 // comparer is a convience type used to conditionally compare using either a string or a
@@ -126,10 +132,12 @@ func (c *comparer) trackUniqueness(copyrightString string) {
 
 func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 	// Setup flags.
-	//nolint:lll // Why: usage long
-	Analyzer.Flags.StringVar(&text, "text", "", "the copyright string required at the top of each .go file. if this and pattern are empty the linter is a no-op")
-	//nolint:lll // Why: usage long
-	Analyzer.Flags.StringVar(&pattern, "pattern", "", "the copyright pattern (as a regular expression) required at the top of each .go file. if this and pattern are empty the linter is a no-op. pattern takes precedence over text if both are supplied")
+	Analyzer.Flags.StringVar(&text, "text", "",
+		"the copyright string required at the top of each .go file. if this and pattern are empty the linter is a no-op")
+	Analyzer.Flags.StringVar(&pattern, "pattern", "",
+		"the copyright pattern (as a regular expression) required at the top of each .go file. if this and pattern are empty the linter is a no-op. pattern takes precedence over text if both are supplied") //nolint:lll // Why: usage long
+	Analyzer.Flags.BoolVar(&warn, "warn", false,
+		"controls whether or not reports from this linter will result in errors or warnings")
 
 	// Trim space around the passed in variables just in case.
 	text = strings.TrimSpace(text)
@@ -138,9 +146,9 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 
 // copyright is the function that gets passed to the Analyzer which runs the actual
 // analysis for the copyright linter on a set of files.
-func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this function up anymore.
+func copyright(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this function up anymore.
 	// Ignore test packages.
-	if common.IsTestPackage(pass) {
+	if common.IsTestPackage(_pass) {
 		return nil, nil
 	}
 
@@ -148,12 +156,21 @@ func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 		return nil, nil
 	}
 
+	var opts []reporter.PassOption
+	if warn {
+		opts = append(opts, reporter.Warn())
+	}
+
+	// Wrap _pass with reporter.Pass to take nolint directives into account and potentially
+	// warn instead of error.
+	pass := reporter.NewPass(name, _pass, opts...)
+
 	// comparer to use on this pass.
 	var c comparer
 
 	for _, file := range pass.Files {
 		// Ignore generated files and test files.
-		if common.IsGenerated(file) || common.IsTestFile(pass, file) {
+		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
 			continue
 		}
 
