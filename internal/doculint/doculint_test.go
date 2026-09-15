@@ -7,8 +7,19 @@ import (
 	"go/token"
 	"testing"
 
+	"golang.org/x/tools/go/analysis/analysistest"
 	"gotest.tools/v3/assert"
 )
+
+// TestDoculint runs the doculint analyzer against the testdata packages. analysistest
+// matches each diagnostic to the `// want` comment on the line it was reported at, so
+// this also guards against the analyzer reporting at token.NoPos, which would leave the
+// diagnostic without a file, line, and column for downstream tooling to parse.
+func TestDoculint(t *testing.T) {
+	analyzer := NewAnalyzerWithOptions(10, true, true, true, true, true)
+
+	analysistest.Run(t, analysistest.TestData(), analyzer, "nopkgcomment", "pkgcomment")
+}
 
 type MockReporter struct {
 	lastFormat string

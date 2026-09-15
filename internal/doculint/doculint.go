@@ -121,6 +121,11 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 	// This will bypass the package comment reporting.
 	allGenerated := true
 
+	// pkgPos is the position of the package keyword in the first non-generated file of the
+	// package. Package-scoped reports are anchored to it so they are emitted with a file,
+	// line, and column instead of an invalid position.
+	var pkgPos token.Pos
+
 	for _, file := range pass.Files {
 		// Ignore generated files and test files.
 		if common.IsGenerated(file) || common.IsTestFile(pass.Pass, file) {
@@ -130,6 +135,10 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 		// We've made it past the generated check, make sure to denote that at least one file in the
 		// package was not generated.
 		allGenerated = false
+
+		if !pkgPos.IsValid() {
+			pkgPos = file.Package
+		}
 
 		if pass.Pkg.Name() == common.PackageMain || !validatePackages {
 			// Ignore the main package, it doesn't need a package comment, and ignore package comment
@@ -231,7 +240,7 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 
 	if !allGenerated {
 		if !packageHasFileWithSameName {
-			pass.Reportf(0, "package \"%s\" has no file with the same name containing package comment", pass.Pkg.Name())
+			pass.Reportf(pkgPos, "package \"%s\" has no file with the same name containing package comment", pass.Pkg.Name())
 		}
 	}
 
