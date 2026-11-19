@@ -17,25 +17,34 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Sentinel errors returned when a configuration deviates from its tier minimums.
+var (
+	// errHeaderFieldMissing is returned when a required header field is not configured.
+	errHeaderFieldMissing = errors.New("deviation detected from tier minimum defaults in lintroller.header.fields")
+
+	// errMinFunLenOutOfRange is returned when minFunLen exceeds the tier minimum.
+	errMinFunLenOutOfRange = errors.New("deviation detected from tier minimum defaults in lintroller.doculint.minFunLen")
+)
+
 // Configuration tier variables that correspond to ops-level tiers. The reason these
 // are variables as opposed to constants is because the address of them are needed
 // when defining their corresponding Tier*Configuration types.
 var (
 	// TierBronze is the tier name that corresponds to the TierBronzeConfiguration
 	// configuration minimums.
-	TierBronze = "bronze"
+	TierBronze = "bronze" //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// TierSilver is the tier name that corresponds to the TierSilverConfiguration
 	// configuration minimums.
-	TierSilver = "silver"
+	TierSilver = "silver" //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// TierGold is the tier name that corresponds to the TierGoldConfiguration
 	// configuration minimums.
-	TierGold = "gold"
+	TierGold = "gold" //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// TierPlatinum is the tier name that corresponds to the TierPlatinumConfiguration
 	// configuration minimums.
-	TierPlatinum = "platinum"
+	TierPlatinum = "platinum" //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 )
 
 // Constants.
@@ -123,9 +132,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error {
 				}
 
 				if !found {
-					return fmt.Errorf(
-						"deviation detected from tier minimum defaults in lintroller.header.fields, fields must contain \"%s\"",
-						desired.Header.Fields[i])
+					return fmt.Errorf("%w, fields must contain %q", errHeaderFieldMissing, desired.Header.Fields[i])
 				}
 			}
 		}
@@ -171,9 +178,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error {
 				})
 				l.Doculint.MinFunLen = desired.Doculint.MinFunLen
 			} else if l.Doculint.MinFunLen > desired.Doculint.MinFunLen || l.Doculint.MinFunLen < 0 {
-				return fmt.Errorf(
-					"deviation detected from tier minimum defaults in lintroller.doculint.minFunLen, minFunLen must be set within (0, %d]",
-					desired.Doculint.MinFunLen)
+				return fmt.Errorf("%w, minFunLen must be set within (0, %d]", errMinFunLenOutOfRange, desired.Doculint.MinFunLen)
 			}
 		}
 	}
@@ -189,7 +194,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error {
 
 // TierBronzeConfiguration is the Lintroller configuration minumums that correspond
 // to the Bronze OpsLevel tier.
-var TierBronzeConfiguration = Lintroller{
+var TierBronzeConfiguration = Lintroller{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Tier: &TierBronze,
 	Header: Header{
 		Enabled: false,
@@ -217,7 +222,7 @@ var TierBronzeConfiguration = Lintroller{
 
 // TierSilverConfiguration is the Lintroller configuration minumums that correspond
 // to the Silver OpsLevel tier.
-var TierSilverConfiguration = Lintroller{
+var TierSilverConfiguration = Lintroller{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Tier: &TierSilver,
 	Header: Header{
 		Enabled: true,
@@ -245,11 +250,11 @@ var TierSilverConfiguration = Lintroller{
 }
 
 // tierFields lists the fields for gold/platinum tiers.
-var tierFields = []string{"Description"}
+var tierFields = []string{"Description"} //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 // TierGoldConfiguration is the Lintroller configuration minumums that correspond
 // to the Gold OpsLevel tier.
-var TierGoldConfiguration = Lintroller{
+var TierGoldConfiguration = Lintroller{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Tier: &TierSilver,
 	Header: Header{
 		Enabled: true,
@@ -278,7 +283,7 @@ var TierGoldConfiguration = Lintroller{
 
 // TierPlatinumConfiguration is the Lintroller configuration minumums that correspond
 // to the Platinum OpsLevel tier.
-var TierPlatinumConfiguration = Lintroller{
+var TierPlatinumConfiguration = Lintroller{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Tier: &TierSilver,
 	Header: Header{
 		Enabled: true,

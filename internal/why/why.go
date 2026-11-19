@@ -27,7 +27,7 @@ A valid example is the following:
 	func foo() { //nolint:doculint // Why: This comment doesn't need a function for some reason.`
 
 // Analyzer exports the why analyzer (linter).
-var Analyzer = analysis.Analyzer{
+var Analyzer = analysis.Analyzer{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Name: name,
 	Doc:  doc,
 	Run:  why,
@@ -51,7 +51,7 @@ var reNoLintNaked = regexp.MustCompile(`^nolint\s*(?:` + whyPattern + `)?$`)
 func why(_pass *analysis.Pass) (any, error) {
 	// Ignore test packages.
 	if common.IsTestPackage(_pass) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 	}
 
 	// Wrap _pass with reporter.Pass to take nolint directives into account.
@@ -80,5 +80,5 @@ func why(_pass *analysis.Pass) (any, error) {
 		}
 	}
 
-	return nil, nil
+	return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 }

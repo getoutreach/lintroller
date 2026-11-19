@@ -27,7 +27,7 @@ const doc = `Checks for proper function, type, package, constant, and string and
  literal documentation in accordance with godoc standards.`
 
 // Analyzer exports the doculint analyzer (linter).
-var Analyzer = analysis.Analyzer{
+var Analyzer = analysis.Analyzer{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Name: name,
 	Doc:  doc,
 	Run:  doculint,
@@ -56,32 +56,32 @@ var (
 	// minFunLen is a variable that gets collected via flags. This variable contains a
 	// the minimum function length that doculint will report on if said function has no
 	// related documentation.
-	minFunLen int
+	minFunLen int //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// validatePackages is a variable that gets collected via flags. This variable contains
 	// a flag that denotes whether or not the linter should validate that packages have
 	// satisfactory comments.
-	validatePackages bool
+	validatePackages bool //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// validateFunctions is a variable that gets collected via flags. This variable contains
 	// a flag that denotes whether or not the linter should validate that functions have
 	// satisfactory comments.
-	validateFunctions bool
+	validateFunctions bool //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// validateVariables is a variable that gets collected via flags. This variable contains
 	// a flag that denotes whether or not the linter should validate that variables have
 	// satisfactory comments.
-	validateVariables bool
+	validateVariables bool //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// validateConstants is a variable that gets collected via flags. This variable contains
 	// a flag that denotes whether or not the linter should validate that constants have
 	// satisfactory comments.
-	validateConstants bool
+	validateConstants bool //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// validateTypes is a variable that gets collected via flags. This variable contains a
 	// flag that denotes whether or not the linter should validate that types have
 	// satisfactory comments.
-	validateTypes bool
+	validateTypes bool //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 )
 
 func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
@@ -108,7 +108,7 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 func doculint(_pass *analysis.Pass) (any, error) {
 	// Ignore test packages.
 	if common.IsTestPackage(_pass) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 	}
 
 	// Wrap _pass with reporter.Pass to take nolint directives into account.
@@ -245,7 +245,7 @@ func doculint(_pass *analysis.Pass) (any, error) {
 		}
 	}
 
-	return nil, nil
+	return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 }
 
 // validateGenDecl validates an *ast.GenDecl to ensure it is up to doculint standards.
@@ -447,7 +447,7 @@ func validateGenDeclVariables(r reporter.Reporter, expr *ast.GenDecl) {
 		vs, ok := expr.Specs[i].(*ast.ValueSpec)
 		if ok {
 			if len(vs.Names) > 1 {
-				var names []string
+				names := make([]string, 0, len(vs.Names))
 				for j := range vs.Names {
 					names = append(names, fmt.Sprintf("%q", vs.Names[j].Name))
 				}

@@ -56,10 +56,10 @@ func (n *noLint) Matches(position token.Position) bool {
 // Please never initialize this type directly, only through NewPass. If you initialize this type
 // directly, it will essentially be a no-op wrapper around *analysis.Pass.
 type Pass struct {
+	*analysis.Pass
+
 	noLints []noLint
 	linter  string
-
-	*analysis.Pass
 
 	// True if this should treat linter issues as warnings.
 	warn bool

@@ -47,7 +47,7 @@ comment group for the header, as follows:
 	package foo`
 
 // Analyzer exports the doculint analyzer (linter).
-var Analyzer = analysis.Analyzer{
+var Analyzer = analysis.Analyzer{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Name: name,
 	Doc:  doc,
 	Run:  header,
@@ -68,7 +68,7 @@ var (
 	// rawFields is a variable that gets collected via flags. This variable contains a
 	// comma-separated list of fields required to be filled out within the header of a
 	// file.
-	rawFields string
+	rawFields string //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 )
 
 func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
@@ -80,7 +80,7 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 func header(pass *analysis.Pass) (any, error) {
 	// Ignore test packages.
 	if common.IsTestPackage(pass) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 	}
 
 	fields := strings.Split(rawFields, ",")
@@ -169,5 +169,5 @@ func header(pass *analysis.Pass) (any, error) {
 		}
 	}
 
-	return nil, nil
+	return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 }
