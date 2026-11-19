@@ -6,7 +6,7 @@ require (
 	github.com/getoutreach/gobox v1.121.0
 	github.com/pkg/errors v0.9.1
 	go.yaml.in/yaml/v3 v3.0.5
-	golang.org/x/tools v0.49.0
+	golang.org/x/tools v0.53.0
 	gotest.tools/v3 v3.5.2
 )
 
@@ -33,8 +33,8 @@ require (
 	go.opentelemetry.io/otel v1.46.0 // indirect
 	go.opentelemetry.io/otel/trace v1.46.0 // indirect
 	golang.org/x/exp v0.0.0-20260718201538-764159d718ef // indirect
-	golang.org/x/mod v0.39.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/mod v0.43.0 // indirect
+	golang.org/x/sync v0.25.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 )
