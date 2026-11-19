@@ -37,6 +37,16 @@ var (
 	TierPlatinum = "platinum"
 )
 
+// Constants.
+const (
+	// copyrightPattern is the regex used to check for copyright headers.
+	copyrightPattern = `^Copyright 20.*$`
+	// fKey is the log.F key for fields.
+	fKey = "field"
+	// vKey is the log.F key for values.
+	vKey = "value"
+)
+
 // ValidateTier ensures that if a tier was provided, the rest of the configuration
 // meets minimum requirements. If a field was left unset, it will be automatically
 // set to the minimum requirement.
@@ -90,7 +100,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 				log.Warn(context.Background(),
 					"boolean value required to be true to meet tier minimum stanards is set to false - overriding to true",
 					log.F{
-						"field": fieldPath,
+						fKey: fieldPath,
 					})
 				return true
 			}
@@ -127,15 +137,15 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 	l.Copyright.Enabled = overrideBool(desired.Copyright.Enabled, l.Copyright.Enabled, "lintroller.copyright.enabled")
 	if l.Copyright.Pattern == "" {
 		log.Warn(context.Background(), "zero value detected for field, overriding to value found in desired tier minimum version", log.F{
-			"field": "lintroller.copyright.pattern",
-			"value": desired.Copyright.Pattern,
+			fKey: "lintroller.copyright.pattern",
+			vKey: desired.Copyright.Pattern,
 		})
 
 		l.Copyright.Pattern = desired.Copyright.Pattern
 	} else if l.Copyright.Pattern != desired.Copyright.Pattern {
 		log.Warn(context.Background(), "deviation detected for field, overriding to value found in desired tier minimum version", log.F{
-			"field": "lintroller.copyright.pattern",
-			"value": desired.Copyright.Pattern,
+			fKey: "lintroller.copyright.pattern",
+			vKey: desired.Copyright.Pattern,
 		})
 
 		l.Copyright.Pattern = desired.Copyright.Pattern
@@ -158,8 +168,8 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 		if l.Doculint.ValidateFunctions {
 			if l.Doculint.MinFunLen == 0 {
 				log.Warn(context.Background(), "zero value detected for field, overriding to value found in desired tier minimum version", log.F{
-					"field": "lintroller.doculint.minFunLen",
-					"value": desired.Doculint.MinFunLen,
+					fKey: "lintroller.doculint.minFunLen",
+					vKey: desired.Doculint.MinFunLen,
 				})
 				l.Doculint.MinFunLen = desired.Doculint.MinFunLen
 			} else if l.Doculint.MinFunLen > desired.Doculint.MinFunLen || l.Doculint.MinFunLen < 0 {
@@ -217,7 +227,7 @@ var TierSilverConfiguration = Lintroller{
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		Pattern: `^Copyright 20.*$`,
+		Pattern: copyrightPattern,
 	},
 	Doculint: Doculint{
 		Enabled:           true,
@@ -236,17 +246,20 @@ var TierSilverConfiguration = Lintroller{
 	},
 }
 
+// tierFields lists the fields for gold/platinum tiers.
+var tierFields = []string{"Description"}
+
 // TierGoldConfiguration is the Lintroller configuration minumums that correspond
 // to the Gold OpsLevel tier.
 var TierGoldConfiguration = Lintroller{
 	Tier: &TierSilver,
 	Header: Header{
 		Enabled: true,
-		Fields:  []string{"Description"},
+		Fields:  tierFields,
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		Pattern: `^Copyright 20.*$`,
+		Pattern: copyrightPattern,
 	},
 	Doculint: Doculint{
 		Enabled:           true,
@@ -271,11 +284,11 @@ var TierPlatinumConfiguration = Lintroller{
 	Tier: &TierSilver,
 	Header: Header{
 		Enabled: true,
-		Fields:  []string{"Description"},
+		Fields:  tierFields,
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		Pattern: `^Copyright 20.*$`,
+		Pattern: copyrightPattern,
 	},
 	Doculint: Doculint{
 		Enabled:           true,

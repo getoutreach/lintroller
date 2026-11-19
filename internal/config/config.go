@@ -13,7 +13,7 @@ import (
 	"regexp"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 // Config is parent type we use to unmarshal YAML files into to gather config
