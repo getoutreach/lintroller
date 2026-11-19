@@ -6,6 +6,8 @@ arguments:
   description: Lintroller houses all of the custom linters that Outreach uses for Go projects.
   go:
     formatter: gofumpt
+    linters:
+      strict: true
   lintroller: platinum
   oss: true
   releaseOptions:

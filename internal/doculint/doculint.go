@@ -105,7 +105,7 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 
 // doculint is the function that gets passed to the Analyzer which runs the actual
 // analysis for the doculint linter on a set of files.
-func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this function up anymore.
+func doculint(_pass *analysis.Pass) (any, error) {
 	// Ignore test packages.
 	if common.IsTestPackage(_pass) {
 		return nil, nil
@@ -166,7 +166,7 @@ func doculint(_pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 						file.Package,
 						"package \"%s\" has no comment associated with it in \"%s.go\"", pass.Pkg.Name(), pass.Pkg.Name())
 				} else {
-					expectedPrefix := fmt.Sprintf("Package %s", pass.Pkg.Name())
+					expectedPrefix := "Package " + pass.Pkg.Name()
 					if !strings.HasPrefix(strings.TrimSpace(file.Doc.Text()), expectedPrefix) {
 						pass.Reportf(
 							file.Package,

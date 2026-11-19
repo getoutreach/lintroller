@@ -23,7 +23,7 @@ type Config struct {
 }
 
 // MarshalLog implements the log.Marshaler interface.
-func (c *Config) MarshalLog(addField func(key string, value interface{})) {
+func (c *Config) MarshalLog(addField func(key string, value any)) {
 	addField("lintroller", c.Lintroller)
 }
 
@@ -71,7 +71,7 @@ type Lintroller struct {
 }
 
 // MarshalLog implements the log.Marshaler interface.
-func (lr *Lintroller) MarshalLog(addField func(key string, value interface{})) {
+func (lr *Lintroller) MarshalLog(addField func(key string, value any)) {
 	addField("exclusions", lr.Exclusions)
 	addField("header", lr.Header)
 	addField("copyright", lr.Copyright)
@@ -105,7 +105,7 @@ type Exclusions struct {
 }
 
 // MarshalLog implements the log.Marshaler interface.
-func (e *Exclusions) MarshalLog(addField func(key string, value interface{})) {
+func (e *Exclusions) MarshalLog(addField func(key string, value any)) {
 	addField("paths", e.Paths)
 }
 
@@ -121,7 +121,7 @@ type Header struct {
 }
 
 // MarshalLog implements the log.Marshaler interface.
-func (h *Header) MarshalLog(addField func(key string, value interface{})) {
+func (h *Header) MarshalLog(addField func(key string, value any)) {
 	addField("enabled", h.Enabled)
 	addField("fields", h.Fields)
 }
@@ -144,7 +144,7 @@ type Copyright struct {
 }
 
 // MarshalLog implements the log.Marshaler interface.
-func (c *Copyright) MarshalLog(addField func(key string, value interface{})) {
+func (c *Copyright) MarshalLog(addField func(key string, value any)) {
 	addField("enabled", c.Enabled)
 	addField("text", c.Text)
 	addField("pattern", c.Pattern)
@@ -182,7 +182,7 @@ type Doculint struct {
 }
 
 // MarshalLog implements the log.Marshaler interface.
-func (d *Doculint) MarshalLog(addField func(key string, value interface{})) {
+func (d *Doculint) MarshalLog(addField func(key string, value any)) {
 	addField("enabled", d.Enabled)
 	addField("minFunLen", d.MinFunLen)
 	addField("validatePackages", d.ValidatePackages)
@@ -199,7 +199,7 @@ type Todo struct {
 }
 
 // MarshalLog implements the log.Marshaler interface.
-func (t *Todo) MarshalLog(addField func(key string, value interface{})) {
+func (t *Todo) MarshalLog(addField func(key string, value any)) {
 	addField("enabled", t.Enabled)
 }
 
@@ -210,6 +210,6 @@ type Why struct {
 }
 
 // MarshalLog implements the log.Marshaler interface.
-func (w *Why) MarshalLog(addField func(key string, value interface{})) {
+func (w *Why) MarshalLog(addField func(key string, value any)) {
 	addField("enabled", w.Enabled)
 }

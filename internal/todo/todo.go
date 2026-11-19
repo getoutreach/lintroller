@@ -37,7 +37,7 @@ var reTodo = regexp.MustCompile(`^TODO(\([\w-]+\))?(\[[a-zA-Z\d-]+\])?: .+$`)
 
 // todo is the function that gets passed to the Analyzer which runs the actual
 // analysis for the todo linter on a set of files.
-func todo(_pass *analysis.Pass) (interface{}, error) {
+func todo(_pass *analysis.Pass) (any, error) {
 	// Ignore test packages.
 	if common.IsTestPackage(_pass) {
 		return nil, nil

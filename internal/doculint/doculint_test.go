@@ -25,7 +25,7 @@ type MockReporter struct {
 	lastFormat string
 }
 
-func (r *MockReporter) Reportf(pos token.Pos, format string, args ...interface{}) {
+func (r *MockReporter) Reportf(pos token.Pos, format string, args ...any) {
 	r.lastFormat = format
 }
 

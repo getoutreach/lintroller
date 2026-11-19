@@ -10,6 +10,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/getoutreach/gobox/pkg/log"
@@ -92,7 +93,7 @@ func (l *Lintroller) ValidateTier() error {
 // This function will allow the receiver to be more restrictive (enable linters when the
 // desired has them disabled, set the minimum function length to a lower value, add more
 // required header fields, etc.), but not allow it to be less restrictive.
-func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen // Why: Splitting this function out would add no value.
+func (l *Lintroller) EnsureMinimums(desired *Lintroller) error {
 	overrideBool := func(necessary, current bool, fieldPath string) bool {
 		if necessary {
 			if !current {
@@ -117,11 +118,8 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 		} else {
 			for i := range desired.Header.Fields {
 				var found bool
-				for j := range l.Header.Fields {
-					if desired.Header.Fields[i] == l.Header.Fields[j] {
-						found = true
-						break
-					}
+				if slices.Contains(l.Header.Fields, desired.Header.Fields[i]) {
+					found = true
 				}
 
 				if !found {

@@ -138,7 +138,7 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 
 // copyright is the function that gets passed to the Analyzer which runs the actual
 // analysis for the copyright linter on a set of files.
-func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this function up anymore.
+func copyright(pass *analysis.Pass) (any, error) {
 	// Ignore test packages.
 	if common.IsTestPackage(pass) {
 		return nil, nil

@@ -13,6 +13,7 @@ package reporter
 import (
 	"fmt"
 	"go/token"
+	"slices"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -25,7 +26,7 @@ const noLintDirective = "nolint:"
 // Reporter is a convenience interface that allows Pass to be provided to helper functions
 // in linters who need to be able to use Reportf.
 type Reporter interface {
-	Reportf(pos token.Pos, format string, args ...interface{})
+	Reportf(pos token.Pos, format string, args ...any)
 }
 
 // noLint is a struct that depicts a filename/line tandem that shouldn't be linted against
@@ -83,26 +84,23 @@ func NewPass(linter string, pass *analysis.Pass, opts ...PassOption) *Pass {
 
 				// whySlashesIdx finds the next set of slashes if the nolint directive is in the form
 				// of:
-				//	nolint: why,doculint // Why: reasoning
+				//nolint: why,doculint // Why: reasoning
 				// If these slashes exist we use the index to trim them and all text following it off
 				// of the string, effectively producing:
-				//	nolint: why,doculint
+				//nolint: why,doculint
 				if whySlashesIdx := strings.Index(text, "//"); whySlashesIdx != -1 {
 					text = strings.TrimSpace(text[:whySlashesIdx])
 				}
 
-				if strings.HasPrefix(text, noLintDirective) {
-					linters := strings.Split(strings.TrimSpace(strings.TrimPrefix(text, noLintDirective)), ",")
+				if after, ok := strings.CutPrefix(text, noLintDirective); ok {
+					linters := strings.Split(strings.TrimSpace(after), ",")
 
-					for i := range linters {
-						if linters[i] == linter {
-							position := pass.Fset.PositionFor(comment.Pos(), false)
-							p.noLints = append(p.noLints, noLint{
-								filename: position.Filename,
-								line:     position.Line,
-							})
-							break
-						}
+					if slices.Contains(linters, linter) {
+						position := pass.Fset.PositionFor(comment.Pos(), false)
+						p.noLints = append(p.noLints, noLint{
+							filename: position.Filename,
+							line:     position.Line,
+						})
 					}
 				}
 			}
@@ -114,7 +112,7 @@ func NewPass(linter string, pass *analysis.Pass, opts ...PassOption) *Pass {
 
 // Reportf is a wrapper around *analysis.Pass.Reportf that respects nolint directives and any other
 // functionality provided by the functional options when Pass was formed with its factory function.
-func (p *Pass) Reportf(pos token.Pos, format string, args ...interface{}) {
+func (p *Pass) Reportf(pos token.Pos, format string, args ...any) {
 	for i := range p.noLints {
 		if p.noLints[i].Matches(p.Pass.Fset.PositionFor(pos, false)) {
 			return
