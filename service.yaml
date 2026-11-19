@@ -4,6 +4,8 @@ arguments:
     skipDocker: true
     skipE2e: true
   description: Lintroller houses all of the custom linters that Outreach uses for Go projects.
+  go:
+    formatter: gofumpt
   lintroller: platinum
   oss: true
   releaseOptions:

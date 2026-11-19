@@ -38,7 +38,8 @@ var Analyzer = analysis.Analyzer{
 // analyzers can be ran outside of the context of a vet tool and config can be gathered
 // from elsewhere.
 func NewAnalyzerWithOptions(
-	_minFunLen int, _validatePackages, _validateFunctions, _validateVariables, _validateConstants, _validateTypes bool) *analysis.Analyzer {
+	_minFunLen int, _validatePackages, _validateFunctions, _validateVariables, _validateConstants, _validateTypes bool,
+) *analysis.Analyzer {
 	minFunLen = _minFunLen
 	validatePackages = _validatePackages
 	validateFunctions = _validateFunctions
