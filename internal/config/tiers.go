@@ -10,10 +10,20 @@ package config
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/getoutreach/gobox/pkg/log"
 	"github.com/pkg/errors"
+)
+
+// Sentinel errors returned when a configuration deviates from its tier minimums.
+var (
+	// errHeaderFieldMissing is returned when a required header field is not configured.
+	errHeaderFieldMissing = errors.New("deviation detected from tier minimum defaults in lintroller.header.fields")
+
+	// errMinFunLenOutOfRange is returned when minFunLen exceeds the tier minimum.
+	errMinFunLenOutOfRange = errors.New("deviation detected from tier minimum defaults in lintroller.doculint.minFunLen")
 )
 
 // Configuration tier variables that correspond to ops-level tiers. The reason these
@@ -22,19 +32,29 @@ import (
 var (
 	// TierBronze is the tier name that corresponds to the TierBronzeConfiguration
 	// configuration minimums.
-	TierBronze = "bronze"
+	TierBronze = "bronze" //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// TierSilver is the tier name that corresponds to the TierSilverConfiguration
 	// configuration minimums.
-	TierSilver = "silver"
+	TierSilver = "silver" //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// TierGold is the tier name that corresponds to the TierGoldConfiguration
 	// configuration minimums.
-	TierGold = "gold"
+	TierGold = "gold" //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// TierPlatinum is the tier name that corresponds to the TierPlatinumConfiguration
 	// configuration minimums.
-	TierPlatinum = "platinum"
+	TierPlatinum = "platinum" //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
+)
+
+// Constants.
+const (
+	// copyrightPattern is the regex used to check for copyright headers.
+	copyrightPattern = `^Copyright 20.*$`
+	// fKey is the log.F key for fields.
+	fKey = "field"
+	// vKey is the log.F key for values.
+	vKey = "value"
 )
 
 // ValidateTier ensures that if a tier was provided, the rest of the configuration
@@ -82,7 +102,7 @@ func (l *Lintroller) ValidateTier() error {
 // This function will allow the receiver to be more restrictive (enable linters when the
 // desired has them disabled, set the minimum function length to a lower value, add more
 // required header fields, etc.), but not allow it to be less restrictive.
-func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen // Why: Splitting this function out would add no value.
+func (l *Lintroller) EnsureMinimums(desired *Lintroller) error {
 	overrideBool := func(necessary, current bool, fieldPath string) bool {
 		if necessary {
 			if !current {
@@ -90,7 +110,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 				log.Warn(context.Background(),
 					"boolean value required to be true to meet tier minimum stanards is set to false - overriding to true",
 					log.F{
-						"field": fieldPath,
+						fKey: fieldPath,
 					})
 				return true
 			}
@@ -107,17 +127,12 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 		} else {
 			for i := range desired.Header.Fields {
 				var found bool
-				for j := range l.Header.Fields {
-					if desired.Header.Fields[i] == l.Header.Fields[j] {
-						found = true
-						break
-					}
+				if slices.Contains(l.Header.Fields, desired.Header.Fields[i]) {
+					found = true
 				}
 
 				if !found {
-					return fmt.Errorf(
-						"deviation detected from tier minimum defaults in lintroller.header.fields, fields must contain \"%s\"",
-						desired.Header.Fields[i])
+					return fmt.Errorf("%w, fields must contain %q", errHeaderFieldMissing, desired.Header.Fields[i])
 				}
 			}
 		}
@@ -127,15 +142,15 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 	l.Copyright.Enabled = overrideBool(desired.Copyright.Enabled, l.Copyright.Enabled, "lintroller.copyright.enabled")
 	if l.Copyright.Pattern == "" {
 		log.Warn(context.Background(), "zero value detected for field, overriding to value found in desired tier minimum version", log.F{
-			"field": "lintroller.copyright.pattern",
-			"value": desired.Copyright.Pattern,
+			fKey: "lintroller.copyright.pattern",
+			vKey: desired.Copyright.Pattern,
 		})
 
 		l.Copyright.Pattern = desired.Copyright.Pattern
 	} else if l.Copyright.Pattern != desired.Copyright.Pattern {
 		log.Warn(context.Background(), "deviation detected for field, overriding to value found in desired tier minimum version", log.F{
-			"field": "lintroller.copyright.pattern",
-			"value": desired.Copyright.Pattern,
+			fKey: "lintroller.copyright.pattern",
+			vKey: desired.Copyright.Pattern,
 		})
 
 		l.Copyright.Pattern = desired.Copyright.Pattern
@@ -158,14 +173,12 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 		if l.Doculint.ValidateFunctions {
 			if l.Doculint.MinFunLen == 0 {
 				log.Warn(context.Background(), "zero value detected for field, overriding to value found in desired tier minimum version", log.F{
-					"field": "lintroller.doculint.minFunLen",
-					"value": desired.Doculint.MinFunLen,
+					fKey: "lintroller.doculint.minFunLen",
+					vKey: desired.Doculint.MinFunLen,
 				})
 				l.Doculint.MinFunLen = desired.Doculint.MinFunLen
 			} else if l.Doculint.MinFunLen > desired.Doculint.MinFunLen || l.Doculint.MinFunLen < 0 {
-				return fmt.Errorf(
-					"deviation detected from tier minimum defaults in lintroller.doculint.minFunLen, minFunLen must be set within (0, %d]",
-					desired.Doculint.MinFunLen)
+				return fmt.Errorf("%w, minFunLen must be set within (0, %d]", errMinFunLenOutOfRange, desired.Doculint.MinFunLen)
 			}
 		}
 	}
@@ -181,7 +194,7 @@ func (l *Lintroller) EnsureMinimums(desired *Lintroller) error { //nolint:funlen
 
 // TierBronzeConfiguration is the Lintroller configuration minumums that correspond
 // to the Bronze OpsLevel tier.
-var TierBronzeConfiguration = Lintroller{
+var TierBronzeConfiguration = Lintroller{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Tier: &TierBronze,
 	Header: Header{
 		Enabled: false,
@@ -209,7 +222,7 @@ var TierBronzeConfiguration = Lintroller{
 
 // TierSilverConfiguration is the Lintroller configuration minumums that correspond
 // to the Silver OpsLevel tier.
-var TierSilverConfiguration = Lintroller{
+var TierSilverConfiguration = Lintroller{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Tier: &TierSilver,
 	Header: Header{
 		Enabled: true,
@@ -217,7 +230,7 @@ var TierSilverConfiguration = Lintroller{
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		Pattern: `^Copyright 20.*$`,
+		Pattern: copyrightPattern,
 	},
 	Doculint: Doculint{
 		Enabled:           true,
@@ -236,17 +249,20 @@ var TierSilverConfiguration = Lintroller{
 	},
 }
 
+// tierFields lists the fields for gold/platinum tiers.
+var tierFields = []string{"Description"} //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
+
 // TierGoldConfiguration is the Lintroller configuration minumums that correspond
 // to the Gold OpsLevel tier.
-var TierGoldConfiguration = Lintroller{
+var TierGoldConfiguration = Lintroller{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Tier: &TierSilver,
 	Header: Header{
 		Enabled: true,
-		Fields:  []string{"Description"},
+		Fields:  tierFields,
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		Pattern: `^Copyright 20.*$`,
+		Pattern: copyrightPattern,
 	},
 	Doculint: Doculint{
 		Enabled:           true,
@@ -267,15 +283,15 @@ var TierGoldConfiguration = Lintroller{
 
 // TierPlatinumConfiguration is the Lintroller configuration minumums that correspond
 // to the Platinum OpsLevel tier.
-var TierPlatinumConfiguration = Lintroller{
+var TierPlatinumConfiguration = Lintroller{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Tier: &TierSilver,
 	Header: Header{
 		Enabled: true,
-		Fields:  []string{"Description"},
+		Fields:  tierFields,
 	},
 	Copyright: Copyright{
 		Enabled: true,
-		Pattern: `^Copyright 20.*$`,
+		Pattern: copyrightPattern,
 	},
 	Doculint: Doculint{
 		Enabled:           true,

@@ -4,6 +4,8 @@ branches:
 plugins:
   - - "@semantic-release/commit-analyzer"
     - releaseRules:
+        - breaking: true
+          release: minor
         - type: revert
           release: patch
         - type: perf
@@ -16,6 +18,7 @@ plugins:
     # to last/nextRelease due to when the step runs.
     - generateNotesCmd: |-
         ./scripts/shell-wrapper.sh major-release-checker.js ${lastRelease.version} ${nextRelease.version}
+
   # Build the binaries
   - - "@semantic-release/exec"
     # We use generateNotesCmd instead of a different step because it has access

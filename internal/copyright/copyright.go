@@ -26,7 +26,7 @@ const doc = `Ensures each .go file has a comment at the top of the file containi
 copyright string requested via flags.`
 
 // Analyzer exports the copyright analyzer (linter).
-var Analyzer = analysis.Analyzer{
+var Analyzer = analysis.Analyzer{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Name: name,
 	Doc:  doc,
 	Run:  copyright,
@@ -47,11 +47,11 @@ func NewAnalyzerWithOptions(_text, _pattern string) *analysis.Analyzer {
 var (
 	// text is a variable that gets collected via flags. This variable contains the copyright
 	// string as plaintext that is required to be at the top of each .go file.
-	text string
+	text string //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 
 	// pattern is a variable that gets collected via flags. This variable contains the copyright
 	// string as a regular expression pattern that is required to be at the top of each .go file.
-	pattern string
+	pattern string //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 )
 
 // comparer is a convience type used to conditionally compare using either a string or a
@@ -138,14 +138,14 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 
 // copyright is the function that gets passed to the Analyzer which runs the actual
 // analysis for the copyright linter on a set of files.
-func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this function up anymore.
+func copyright(pass *analysis.Pass) (any, error) {
 	// Ignore test packages.
 	if common.IsTestPackage(pass) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 	}
 
 	if text == "" && pattern == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 	}
 
 	// comparer to use on this pass.
@@ -196,5 +196,5 @@ func copyright(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Wh
 		}
 	}
 
-	return nil, nil
+	return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 }

@@ -24,7 +24,7 @@ const doc = "Ensures that each TODO comment defined in the codebase conforms to 
 	"format `TODO(<gh-user>)[<jira-ticket>]: <summary>`, with one of `(gh-user)` or `[jira-ticket]` being required."
 
 // Analyzer exports the todo analyzer (linter).
-var Analyzer = analysis.Analyzer{
+var Analyzer = analysis.Analyzer{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Name: name,
 	Doc:  doc,
 	Run:  todo,
@@ -37,10 +37,10 @@ var reTodo = regexp.MustCompile(`^TODO(\([\w-]+\))?(\[[a-zA-Z\d-]+\])?: .+$`)
 
 // todo is the function that gets passed to the Analyzer which runs the actual
 // analysis for the todo linter on a set of files.
-func todo(_pass *analysis.Pass) (interface{}, error) {
+func todo(_pass *analysis.Pass) (any, error) {
 	// Ignore test packages.
 	if common.IsTestPackage(_pass) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 	}
 
 	// Wrap _pass with reporter.Pass to take nolint directives into account.
@@ -63,7 +63,7 @@ func todo(_pass *analysis.Pass) (interface{}, error) {
 		}
 	}
 
-	return nil, nil
+	return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 }
 
 // matchTodo returns true if the given comment does not have a TODO, or if it

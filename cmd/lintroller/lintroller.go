@@ -105,9 +105,9 @@ func withExclusionPaths(analyzer *analysis.Analyzer, exclusionPaths []*regexp.Re
 	}
 
 	wrapped := *analyzer
-	wrapped.Run = func(pass *analysis.Pass) (interface{}, error) {
+	wrapped.Run = func(pass *analysis.Pass) (any, error) {
 		if isExcludedPass(pass, exclusionPaths) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 		}
 
 		return analyzer.Run(pass)

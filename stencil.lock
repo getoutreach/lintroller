@@ -1,26 +1,26 @@
-version: v1.45.1
+version: v1.47.1-rc.3
 modules:
     - name: github.com/getoutreach/devbase
       url: https://github.com/getoutreach/devbase
-      version: v2.39.3-rc.1
+      version: v2.41.0-rc.10
     - name: github.com/getoutreach/stencil-actions
       url: https://github.com/getoutreach/stencil-actions
       version: v0.4.9
     - name: github.com/getoutreach/stencil-base
       url: https://github.com/getoutreach/stencil-base
-      version: v0.20.0
+      version: v0.22.0-rc.1
     - name: github.com/getoutreach/stencil-circleci
       url: https://github.com/getoutreach/stencil-circleci
-      version: v1.19.0
+      version: v1.21.0-rc.2
     - name: github.com/getoutreach/stencil-discovery
       url: https://github.com/getoutreach/stencil-discovery
       version: v1.9.1
     - name: github.com/getoutreach/stencil-golang
       url: https://github.com/getoutreach/stencil-golang
-      version: v1.34.1-rc.1
+      version: v1.37.0-rc.5
     - name: github.com/getoutreach/stencil-outreach
       url: https://github.com/getoutreach/stencil-outreach
-      version: v0.32.0
+      version: v0.35.0-rc.5
     - name: github.com/getoutreach/stencil-pipeline
       url: https://github.com/getoutreach/stencil-pipeline
       version: v1.2.9
@@ -78,9 +78,6 @@ files:
       module: github.com/getoutreach/stencil-golang
     - name: AGENTS.md
       template: AGENTS.md.tpl
-      module: github.com/getoutreach/stencil-base
-    - name: CLAUDE.md
-      template: CLAUDE.md.tpl
       module: github.com/getoutreach/stencil-base
     - name: LICENSE
       template: LICENSE.tpl

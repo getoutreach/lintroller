@@ -8,7 +8,6 @@
 package header
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/getoutreach/lintroller/internal/common"
@@ -48,7 +47,7 @@ comment group for the header, as follows:
 	package foo`
 
 // Analyzer exports the doculint analyzer (linter).
-var Analyzer = analysis.Analyzer{
+var Analyzer = analysis.Analyzer{ //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 	Name: name,
 	Doc:  doc,
 	Run:  header,
@@ -69,7 +68,7 @@ var (
 	// rawFields is a variable that gets collected via flags. This variable contains a
 	// comma-separated list of fields required to be filled out within the header of a
 	// file.
-	rawFields string
+	rawFields string //nolint:gochecknoglobals // Why: Required by the analysis framework or flag registration.
 )
 
 func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
@@ -78,10 +77,10 @@ func init() { //nolint:gochecknoinits // Why: This is necessary to grab flags.
 
 // header is the function that gets passed to the Analyzer which runs the actual
 // analysis for the header linter on a set of files.
-func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: Doesn't make sense to break this up.
+func header(pass *analysis.Pass) (any, error) {
 	// Ignore test packages.
 	if common.IsTestPackage(pass) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 	}
 
 	fields := strings.Split(rawFields, ",")
@@ -127,7 +126,7 @@ func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: 
 			// by a simple strings.Contains check in the entire text of the comment group. If
 			// we end up finding all fields we will do further validation.
 			for i := range fields {
-				if strings.Contains(commentGroup.Text(), fmt.Sprintf("%s: ", fields[i])) {
+				if strings.Contains(commentGroup.Text(), fields[i]+": ") {
 					numFound++
 				}
 			}
@@ -137,10 +136,10 @@ func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: 
 				for _, comment := range commentGroup.List {
 					for i := range fields {
 						cleanComment := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
-						prefix := fmt.Sprintf("%s: ", fields[i])
+						prefix := fields[i] + ": "
 
-						if strings.HasPrefix(cleanComment, prefix) {
-							if strings.TrimPrefix(cleanComment, prefix) != "" {
+						if after, ok := strings.CutPrefix(cleanComment, prefix); ok {
+							if after != "" {
 								// If the current comment line has a field prefix we're looking for and
 								// data proceeding the colon and space after the colon, we will mark the
 								// field as valid.
@@ -170,5 +169,5 @@ func header(pass *analysis.Pass) (interface{}, error) { //nolint:funlen // Why: 
 		}
 	}
 
-	return nil, nil
+	return nil, nil //nolint:nilnil // Why: Analyzers return no result when there is nothing to pass on.
 }
